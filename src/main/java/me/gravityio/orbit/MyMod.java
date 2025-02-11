@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package me.gravityio.orbit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

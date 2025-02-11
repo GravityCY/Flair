@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package me.gravityio.orbit;
 
 import java.io.File;
 
