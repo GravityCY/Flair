@@ -25,7 +25,7 @@ import org.apache.logging.log4j.Logger;
         modid = Flair.MODID,
         version = "1.0",
         name = "Flair",
-        dependencies = "required-after:gtnhlib@[0.6.3,);required-after:unimixins",
+        dependencies = "required-after:gtnhlib;required-after:unimixins",
         acceptedMinecraftVersions = "[1.7.10]"
 )
 @SideOnly(Side.CLIENT)
