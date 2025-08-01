@@ -31,10 +31,16 @@ public class WatchThread extends Thread{
                 for (WatchEvent<?> event : key.pollEvents()) {
                     WatchEvent<Path> ev = (WatchEvent<Path>) event;
                     Path fileName = ev.context();
-                    if (!fileName.toString().endsWith(FlairConfig.CONFIG_PATH)) continue;
                     if (System.currentTimeMillis() - this.lastTrigger < 500) continue;
-                    Flair.LOGGER.info("Flair config changed, reloading...");
-                    Minecraft.getMinecraft().func_152344_a(FlairConfig::load);
+                    if (fileName.toString().endsWith(FlairConfig.CONFIG_PATH)) {
+                        Flair.LOGGER.info("Flair config changed, reloading...");
+                        Minecraft.getMinecraft().func_152344_a(FlairConfig::loadConfig);
+                    } else if (fileName.endsWith(FlairConfig.SOUNDMAP_PATH)) {
+                        Flair.LOGGER.info("Flair soundmap changed, reloading...");
+                        Minecraft.getMinecraft().func_152344_a(FlairConfig::loadSoundMap);
+                    } else {
+                        continue;
+                    }
                     this.lastTrigger = System.currentTimeMillis();
                 }
 

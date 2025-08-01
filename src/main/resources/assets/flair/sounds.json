@@ -1,64 +1,4 @@
 {
-  "stony": {
-    "category": "master",
-    "sounds": [
-      "minecraft:dig/stone1",
-      "minecraft:dig/stone2",
-      "minecraft:dig/stone3",
-      "minecraft:dig/stone4"
-    ]
-  },
-  "woody": {
-    "category": "master",
-    "sounds": [
-      "minecraft:dig/wood1",
-      "minecraft:dig/wood2",
-      "minecraft:dig/wood3",
-      "minecraft:dig/wood4"
-    ]
-  },
-  "snowy": {
-    "category": "master",
-    "sounds": [
-      "minecraft:dig/snow1",
-      "minecraft:dig/snow2",
-      "minecraft:dig/snow3",
-      "minecraft:dig/snow4"
-    ]
-  },
-  "earthy": {
-    "category": "master",
-    "sounds": [
-      "minecraft:dig/grass1",
-      "minecraft:dig/grass2",
-      "minecraft:dig/grass3",
-      "minecraft:dig/grass4"
-    ]
-  },
-  "dusty": {
-    "category": "master",
-    "sounds": [
-      "minecraft:dig/sand1",
-      "minecraft:dig/sand2",
-      "minecraft:dig/sand3",
-      "minecraft:dig/sand4"
-    ]
-  },
-  "clothy": {
-    "category": "master",
-    "sounds": [
-      "minecraft:dig/cloth1",
-      "minecraft:dig/cloth2",
-      "minecraft:dig/cloth3",
-      "minecraft:dig/cloth4"
-      ]
-  },
-  "leathery": {
-    "category": "master",
-    "sounds": [
-      "minecraft:mob/horse/leather"
-    ]
-  },
   "crystally": {
     "category": "master",
     "sounds": [
@@ -69,12 +9,6 @@
     "category": "master",
     "sounds": [
       "metal_reverb"
-    ]
-  },
-  "pop": {
-    "category": "master",
-    "sounds": [
-      "minecraft:random/pop"
     ]
   },
   "shing": {

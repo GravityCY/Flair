@@ -1,7 +1,9 @@
 package me.gravityio.flair;
 
+import cpw.mods.fml.common.registry.GameData;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import me.gravityio.flair.condition.*;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 
@@ -30,14 +32,27 @@ public class FlairCommand implements ICommand {
         if (args.length == 0) return;
         if (args[0].equals("set")) {
             if (args.length == 1) return;
-            String item = args[1];
-        }
 
+            String item = args[1];
+            if (!GameData.getItemRegistry().containsKey(item)) {
+                Flair.LOGGER.error("Item not found: {}", item);
+                return;
+            }
+            if (args.length == 2) {
+                Flair.LOGGER.error("Expected sound to play..");
+                return;
+            }
+            String sound = args[2];
+//            FlairConfig.CONFIG.put(GameData.getItemRegistry().getObject(item), , );
+        } else if (args[0].equals("if")) {
+            String[] parseArgs = Arrays.copyOfRange(args,1, args.length);
+            Parser.parseIf(parseArgs);
+        }
     }
 
     @Override
     public boolean canCommandSenderUseCommand(ICommandSender sender) {
-        return false;
+        return true;
     }
 
     @Override

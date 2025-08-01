@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import me.gravityio.flair.condition.*;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.Item;
@@ -14,23 +15,49 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static me.gravityio.flair.SoundResources.*;
 
 @SideOnly(Side.CLIENT)
 public class FlairConfig {
-    public static FlairConfig CONFIG;
-    public static File CONFIG_FILE;
+    public static final String SOUNDMAP_PATH = "item.soundmap";
     public static final String CONFIG_PATH = "flair.json";
+
+    public static FlairConfig CONFIG;
+    public static File CONFIG_DIRECTORY;
+    public static File CONFIG_FILE;
+    public static File SOUNDMAP_FILE;
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     public int VOLUME = 100;
-    public Map<String, String> ITEM_SOUNDS;
+    public String DEFAULT_SOUND = "random.pop";
+    public Map<String, String> ITEM_SOUNDS = new HashMap<>();
+    public transient List<ItemCondition> CONDITIONS = new ArrayList<>();
 
     public FlairConfig() {
-        this.ITEM_SOUNDS = new HashMap<>();
+        this.CONDITIONS.add(
+                new ItemCondition(
+                        new BinaryExpression(
+                                new ItemExpression(
+                                        VariableType.ITEM_DISPLAY_NAME,
+                                        CompareMethod.CONTAINS,
+                                        "wood"
+                                ),
+                                new ItemExpression(
+                                        VariableType.ITEM_ID,
+                                        CompareMethod.CONTAINS,
+                                        "wood"
+                                ),
+                                BinaryOperator.OR
+                        ),
+                        WOODY)
+        );
 
         this.put(Item.getItemFromBlock(Blocks.noteblock), "note.harp");
         this.put(Item.getItemFromBlock(Blocks.piston), "tile.piston.in");
@@ -105,8 +132,6 @@ public class FlairConfig {
         this.put(Item.getItemFromBlock(Blocks.diamond_block), METALLY);
         this.put(Item.getItemFromBlock(Blocks.gold_block), METALLY);
         this.put(Item.getItemFromBlock(Blocks.iron_bars), METALLY);
-        this.put(Items.iron_ingot, METALLY);
-        this.put(Items.gold_ingot, METALLY);
 
         this.put(Item.getItemFromBlock(Blocks.snow), SNOWY);
         this.put(Item.getItemFromBlock(Blocks.snow_layer), SNOWY);
@@ -181,10 +206,18 @@ public class FlairConfig {
     }
 
     public static void init(File configDirectory) {
-        CONFIG_FILE = new File(configDirectory, CONFIG_PATH);
+        CONFIG_DIRECTORY = new File(configDirectory, "flair");
+        CONFIG_DIRECTORY.mkdirs();
+        CONFIG_FILE = new File(CONFIG_DIRECTORY, CONFIG_PATH);
+        SOUNDMAP_FILE = new File(CONFIG_DIRECTORY, SOUNDMAP_PATH);
     }
 
     public static void load() {
+        loadConfig();
+        loadSoundMap();
+    }
+
+    public static void loadConfig() {
         Flair.LOGGER.info("Loading flair config...");
         if (!CONFIG_FILE.exists()) {
             save();
@@ -197,6 +230,15 @@ public class FlairConfig {
                 Flair.LOGGER.error("Invalid flair config! Resetting...");
                 save();
             }
+        }
+    }
+
+    public static void loadSoundMap() {
+        try {
+            CONFIG.CONDITIONS.clear();
+            Parser.parseLines(Files.readAllLines(SOUNDMAP_FILE.toPath()).toArray(new String[0]));
+        } catch (IOException e) {
+            Flair.LOGGER.error("Failed to load flair soundmap", e);
         }
     }
 

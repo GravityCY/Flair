@@ -1,4 +1,5 @@
 package me.gravityio.flair.condition;
 
-public class Condition {
+public enum BinaryOperator {
+    AND, OR
 }

@@ -8,6 +8,7 @@ import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import me.gravityio.flair.condition.ItemCondition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiHopper;
 import net.minecraft.client.gui.GuiRepair;
@@ -16,6 +17,7 @@ import net.minecraft.client.gui.inventory.GuiDispenser;
 import net.minecraft.client.gui.inventory.GuiFurnace;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
@@ -32,9 +34,7 @@ import org.apache.logging.log4j.Logger;
 public class Flair {
     public static final String MODID = "flair";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
-
     public static boolean OUR_SOUND = false;
-
     public static Flair INSTANCE;
 
     private long lastSound;
@@ -51,18 +51,17 @@ public class Flair {
         }
     }
 
-    private static boolean IS_WOOD(String name) {
-        name = name.toLowerCase();
-        return name.contains("wood") || name.contains("plank") || name.contains("log");
-    }
-
     public static String getSound(ItemStack stack) {
         if (stack == null) return null;
 
         String sound = FlairConfig.CONFIG.get(stack);
-        if (sound == null)
-            return IS_WOOD(stack.getUnlocalizedName()) ? SoundResources.WOODY : SoundResources.STONY;
-
+        if (sound == null) {
+            for (ItemCondition condition : FlairConfig.CONFIG.CONDITIONS) {
+                if (!condition.shouldPlay(stack)) continue;
+                return condition.getSound();
+            }
+            return SoundResources.POP;
+        }
         return sound;
     }
 
@@ -72,6 +71,7 @@ public class Flair {
     }
 
     public void playSound(String sound, float volume, float pitch) {
+        if (sound == null) return;
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer == null) return;
         if (System.currentTimeMillis() - this.lastSound < 100) return;
@@ -87,7 +87,7 @@ public class Flair {
     public void preInit(FMLPreInitializationEvent event) {
         FlairConfig.init(event.getModConfigurationDirectory());
         FlairConfig.load();
-        WatchThread watchThread = new WatchThread(event.getModConfigurationDirectory());
+        WatchThread watchThread = new WatchThread(FlairConfig.CONFIG_DIRECTORY);
         watchThread.start();
     }
 
@@ -95,11 +95,9 @@ public class Flair {
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         FMLCommonHandler.instance().bus().register(this);
+        ClientCommandHandler.instance.registerCommand(new FlairCommand());
 
         INSTANCE = this;
-
-
-
     }
 
     @SubscribeEvent
