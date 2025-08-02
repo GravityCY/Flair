@@ -19,8 +19,8 @@ public class SoundCategoryMixin
             ordinal = 0
     )
     private SoundCategory modCategory(SoundCategory category) {
-        if (!Flair.OUR_SOUND) return category;
-        Flair.OUR_SOUND = false;
+        if (!Flair.INSTANCE.ourSound) return category;
+        Flair.INSTANCE.ourSound = false;
         return SoundCategory.MASTER;
     }
 }

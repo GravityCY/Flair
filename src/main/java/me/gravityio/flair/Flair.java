@@ -6,9 +6,12 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
+import cpw.mods.fml.common.registry.GameData;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import me.gravityio.flair.condition.ISoundGenerator;
 import me.gravityio.flair.condition.ItemCondition;
+import me.gravityio.flair.condition.SoundData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiHopper;
 import net.minecraft.client.gui.GuiRepair;
@@ -17,7 +20,6 @@ import net.minecraft.client.gui.inventory.GuiDispenser;
 import net.minecraft.client.gui.inventory.GuiFurnace;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
-import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
@@ -34,9 +36,10 @@ import org.apache.logging.log4j.Logger;
 public class Flair {
     public static final String MODID = "flair";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
-    public static boolean OUR_SOUND = false;
     public static Flair INSTANCE;
 
+    // just a flag for the mixin to identify our sound
+    public boolean ourSound = false;
     private long lastSound;
 
     public static void sendMessage(String message, Object... args) {
@@ -51,34 +54,38 @@ public class Flair {
         }
     }
 
-    public static String getSound(ItemStack stack) {
+    public static SoundData getSound(ItemStack stack) {
         if (stack == null) return null;
 
-        String sound = FlairConfig.CONFIG.get(stack);
+        String name = GameData.getItemRegistry().getNameForObject(stack.getItem());
+        if (stack.getHasSubtypes()) {
+            name = name + ":" + stack.getItemDamage();
+        }
+        ISoundGenerator sound = FlairConfig.CONFIG.ITEM_SOUNDS.get(name);
         if (sound == null) {
             for (ItemCondition condition : FlairConfig.CONFIG.CONDITIONS) {
                 if (!condition.shouldPlay(stack)) continue;
-                return condition.getSound();
+                return condition.getSound(stack);
             }
-            return SoundResources.POP;
+            return FlairConfig.CONFIG.DEFAULT_SOUND;
         }
-        return sound;
+        return sound.getSound(stack);
     }
 
     public void playSound(ItemStack stack) {
         if (stack == null) return;
-        this.playSound(getSound(stack), FlairConfig.CONFIG.VOLUME / 100f, 1);
+        this.playSound(getSound(stack));
     }
 
-    public void playSound(String sound, float volume, float pitch) {
+    public void playSound(SoundData sound) {
         if (sound == null) return;
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer == null) return;
         if (System.currentTimeMillis() - this.lastSound < 100) return;
 
         // FOR THE MIXIN MOD
-        OUR_SOUND = true;
-        mc.thePlayer.playSound(sound, volume, pitch);
+        ourSound = true;
+        mc.thePlayer.playSound(sound.sound, sound.volume * FlairConfig.CONFIG.VOLUME / 100f, sound.pitch);
 
         this.lastSound = System.currentTimeMillis();
     }
@@ -95,7 +102,6 @@ public class Flair {
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         FMLCommonHandler.instance().bus().register(this);
-        ClientCommandHandler.instance.registerCommand(new FlairCommand());
 
         INSTANCE = this;
     }

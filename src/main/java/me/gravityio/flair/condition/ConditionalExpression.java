@@ -1,13 +1,14 @@
 package me.gravityio.flair.condition;
 
+import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 
-public class ItemExpression implements Expression {
+public class ConditionalExpression implements Expression {
     private final VariableType variable;
     private final CompareMethod compareMethod;
     private final String argument;
 
-    public ItemExpression(VariableType variable, CompareMethod compareMethod, String argument) {
+    public ConditionalExpression(VariableType variable, CompareMethod compareMethod, String argument) {
         this.variable = variable;
         this.compareMethod = compareMethod;
         this.argument = argument.toLowerCase();
@@ -28,6 +29,11 @@ public class ItemExpression implements Expression {
             case ITEM_DAMAGE -> switch (this.compareMethod) {
                 case EQUALS -> stack.getItemDamage() == Integer.parseInt(this.argument);
                 case NEQUALS -> stack.getItemDamage() != Integer.parseInt(this.argument);
+                default -> false;
+            };
+            case IS_BLOCK_ITEM -> switch (this.compareMethod) {
+                case EQUALS -> stack.getItem() instanceof ItemBlock == Boolean.parseBoolean(this.argument);
+                case NEQUALS -> stack.getItem() instanceof ItemBlock != Boolean.parseBoolean(this.argument);
                 default -> false;
             };
         };
