@@ -14,6 +14,7 @@ import me.gravityio.flair.condition.ItemCondition;
 import me.gravityio.flair.condition.SoundData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiHopper;
+import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.gui.GuiRepair;
 import net.minecraft.client.gui.inventory.GuiCrafting;
 import net.minecraft.client.gui.inventory.GuiDispenser;
@@ -43,13 +44,16 @@ public class Flair {
     private long lastSound;
 
     public static void sendMessage(String message, Object... args) {
+        GuiIngame ingameGui = Minecraft.getMinecraft().ingameGUI;
+        if (ingameGui == null) return;
+
         message = String.format(message, args);
         String[] arr = message.split("\n");
         if (arr.length == 0) {
-            Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(new ChatComponentText(message));
+            ingameGui.getChatGUI().printChatMessage(new ChatComponentText(message));
         } else {
             for (String str : arr) {
-                Minecraft.getMinecraft().ingameGUI.getChatGUI().printChatMessage(new ChatComponentText(str));
+                ingameGui.getChatGUI().printChatMessage(new ChatComponentText(str));
             }
         }
     }

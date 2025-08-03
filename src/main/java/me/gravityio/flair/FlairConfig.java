@@ -16,7 +16,7 @@ import java.util.Map;
 
 @SideOnly(Side.CLIENT)
 public class FlairConfig {
-    public static final String CONFIG_PATH = "flair.config";
+    public static final String CONFIG_FILENAME = "flair.config";
 
     public static FlairConfig CONFIG;
     public static File CONFIG_DIRECTORY;
@@ -31,7 +31,7 @@ public class FlairConfig {
         CONFIG = new FlairConfig();
         CONFIG_DIRECTORY = new File(configDirectory, "flair");
         CONFIG_DIRECTORY.mkdirs();
-        CONFIG_FILE = new File(CONFIG_DIRECTORY, CONFIG_PATH);
+        CONFIG_FILE = new File(CONFIG_DIRECTORY, CONFIG_FILENAME);
     }
 
     private static void copyDefaultConfig() {
