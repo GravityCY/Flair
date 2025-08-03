@@ -3,61 +3,13 @@ package me.gravityio.flair.condition;
 import cpw.mods.fml.common.registry.GameData;
 import me.gravityio.flair.Flair;
 import me.gravityio.flair.FlairConfig;
+import me.gravityio.flair.util.ListPointer;
+import me.gravityio.flair.util.StringUtils;
 import net.minecraft.util.ResourceLocation;
 
+import java.util.List;
+
 public class Parser {
-
-    public static class ArrayPointer<T> {
-        private int index = 0;
-        private final T[] args;
-
-        public ArrayPointer(int index, T[] args) {
-            this.index = index;
-            this.args = args;
-        }
-
-        public boolean isEnd() {
-            return this.index >= this.args.length;
-        }
-
-        public boolean hasNext() {
-            return this.index < this.args.length;
-        }
-
-        public T peek() {
-            if (this.index >= this.args.length) {
-                return null;
-            }
-            return this.args[index];
-        }
-
-        public T peek(int offset) {
-            if (this.index + offset >= this.args.length) {
-                return null;
-            }
-            return this.args[index + offset];
-        }
-
-        public T eat() {
-            if (this.index >= this.args.length) {
-                return null;
-            }
-            return this.args[index++];
-        }
-
-        public T prev() {
-            return this.args[index - 1];
-        }
-
-        public void skip() {
-            this.skip(1);
-        }
-
-        public void skip(int count) {
-            this.index += count;
-        }
-    }
-
     public static class ConfigParseException extends Exception {
         public ConfigParseException(String message) {
             super(message);
@@ -72,24 +24,13 @@ public class Parser {
         Flair.sendMessage("Error on line %d: '%s'", lineIndex + 1, message);
     }
 
-    public static String[] split(String line) {
-        int quoteIndex = line.indexOf("\"");
-        if (quoteIndex == -1) {
-            return line.split(" ");
-        }
-        String[] arr = new String[2];
-        arr[0] = line.substring(0, quoteIndex);
-        arr[1] = line.substring(quoteIndex + 1);
-        return arr;
-    }
-
     public static void parseLines(String[] lines) {
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             if (line.startsWith("#") || line.isEmpty()) continue;
-            String[] argsStr = line.split(" ");
-            String command = argsStr[0].toLowerCase();
-            ArrayPointer<String> args = new ArrayPointer<>(1, argsStr);
+            List<String> argsStr = StringUtils.split(line);
+            String command = argsStr.get(0).toLowerCase();
+            ListPointer<String> args = new ListPointer<>(1, argsStr);
             try {
                 switch (command) {
                     case "volume" -> {
@@ -119,7 +60,7 @@ public class Parser {
         }
     }
 
-    public static void parseSet(ArrayPointer<String> args) throws ConfigParseException {
+    public static void parseSet(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected an item and a sound to play...");
         }
@@ -134,7 +75,7 @@ public class Parser {
         FlairConfig.CONFIG.ITEM_SOUNDS.put(item, parseSoundGenerator(args));
     }
 
-    public static ConditionalExpression parseIfExpression(ArrayPointer<String> args) throws ConfigParseException {
+    public static ConditionalExpression parseIfExpression(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a variable type... <variable> <comparison> <argument>");
         }
@@ -153,7 +94,7 @@ public class Parser {
         return new ConditionalExpression(variable, condition, obj);
     }
 
-    public static void parseVolume(ArrayPointer<String> args) throws ConfigParseException {
+    public static void parseVolume(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a value...");
         }
@@ -164,7 +105,7 @@ public class Parser {
         FlairConfig.CONFIG.VOLUME = volume;
     }
 
-    public static void parseDefault(ArrayPointer<String> args) throws ConfigParseException {
+    public static void parseDefault(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a sound to play...");
         }
@@ -188,7 +129,7 @@ public class Parser {
         FlairConfig.CONFIG.DEFAULT_SOUND = new SoundData(sound, volume, pitch);
     }
 
-    public static ItemCondition parseIf(ArrayPointer<String> args) throws ConfigParseException {
+    public static ItemCondition parseIf(ListPointer<String> args) throws ConfigParseException {
         if (args.peek().equals("if")) args.skip();
         Expression main = parseIfExpression(args);
         while (true) {
@@ -207,7 +148,7 @@ public class Parser {
         return new ItemCondition(main, parseSoundGenerator(args));
     }
 
-    public static ISoundGenerator parseSoundGenerator(ArrayPointer<String> args) throws ConfigParseException {
+    public static ISoundGenerator parseSoundGenerator(ListPointer<String> args) throws ConfigParseException {
         return switch(args.peek().toLowerCase()) {
             case "play" -> {
                 if (args.isEnd()) {

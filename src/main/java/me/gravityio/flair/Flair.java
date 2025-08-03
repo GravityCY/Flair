@@ -21,6 +21,9 @@ import net.minecraft.client.gui.inventory.GuiDispenser;
 import net.minecraft.client.gui.inventory.GuiFurnace;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
@@ -54,6 +57,21 @@ public class Flair {
         } else {
             for (String str : arr) {
                 ingameGui.getChatGUI().printChatMessage(new ChatComponentText(str));
+            }
+        }
+    }
+
+    public static void sendMessage(String message, EnumChatFormatting colour, Object... args) {
+        GuiIngame ingameGui = Minecraft.getMinecraft().ingameGUI;
+        if (ingameGui == null) return;
+
+        message = String.format(message, args);
+        String[] arr = message.split("\n");
+        if (arr.length == 0) {
+            ingameGui.getChatGUI().printChatMessage(new ChatComponentText(message).setChatStyle(new ChatStyle().setColor(colour)));
+        } else {
+            for (String str : arr) {
+                ingameGui.getChatGUI().printChatMessage(new ChatComponentText(str).setChatStyle(new ChatStyle().setColor(colour)));
             }
         }
     }
@@ -106,6 +124,7 @@ public class Flair {
     public void init(FMLInitializationEvent event) {
         MinecraftForge.EVENT_BUS.register(this);
         FMLCommonHandler.instance().bus().register(this);
+        ClientCommandHandler.instance.registerCommand(new FlairCommand());
 
         INSTANCE = this;
     }

@@ -3,7 +3,7 @@ package me.gravityio.flair.condition;
 import java.util.function.BiPredicate;
 
 public enum CompareMethod {
-    CONTAINS("contains", (a, b) -> ((String) a).contains((String) b)),
+    CONTAINS("contains", (a, b) -> ((String) a).toLowerCase().contains(((String) b).toLowerCase())),
     EQUALS("is", Object::equals),
     NEQUALS("isnt", (a, b) -> !a.equals(b));
 
