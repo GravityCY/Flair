@@ -1,8 +1,6 @@
 package me.gravityio.flair.condition;
 
-import net.minecraft.item.ItemStack;
-
-public class NormalSoundGenerator implements ISoundGenerator {
+public class NormalSoundGenerator<T> implements ISoundGenerator<T> {
     private final String soundToPlay;
     private final float volume;
     private final float pitch;
@@ -14,7 +12,7 @@ public class NormalSoundGenerator implements ISoundGenerator {
     }
 
     @Override
-    public SoundData getSound(ItemStack stack) {
+    public SoundData getSound(T stack) {
         return new SoundData(this.soundToPlay, this.volume, this.pitch);
     }
 }

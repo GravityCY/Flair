@@ -52,7 +52,7 @@ public class FlairEarlyMixins implements IFMLLoadingPlugin, IEarlyMixinLoader {
     @Override
     public List<String> getMixins(Set<String> loadedCoreMods) {
         if (FMLLaunchHandler.side() == Side.CLIENT) {
-            return Arrays.asList("SlotMixin", "NEIRecipeClickMixin", "SoundCategoryMixin");
+            return Arrays.asList("SlotClickMixin", "NEIRecipeClickMixin", "SoundCategoryMixin", "ChangeSlotMixin");
         }
         return Collections.emptyList();
     }

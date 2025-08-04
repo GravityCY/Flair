@@ -1,16 +1,25 @@
 package me.gravityio.flair.condition;
 
 import cpw.mods.fml.common.registry.GameData;
+import me.gravityio.flair.BlockInstance;
 import me.gravityio.flair.Flair;
 import me.gravityio.flair.FlairConfig;
 import me.gravityio.flair.MetaLocation;
 import me.gravityio.flair.util.ListPointer;
 import me.gravityio.flair.util.StringUtils;
+import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
 
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 public class Parser {
     public static class ConfigParseException extends Exception {
+        public ConfigParseException(String message, Object... args) {
+            super(String.format(message, args));
+        }
+
         public ConfigParseException(String message) {
             super(message);
         }
@@ -19,6 +28,7 @@ public class Parser {
     private static void info(String message, int lineIndex) {
         Flair.LOGGER.info("Info on line {}: {}", lineIndex + 1, message);
     }
+
     private static void error(String message, int lineIndex) {
         Flair.LOGGER.error("Error on line {}: {}", lineIndex + 1, message);
         Flair.sendMessage("Error on line %d: '%s'", lineIndex + 1, message);
@@ -44,11 +54,11 @@ public class Parser {
                     }
                     case "set" -> {
                         info("Adding set condition...", i);
-                        parseSet(args);
+                        parseSetGeneric(args);
                     }
                     case "if" -> {
                         info("Adding if condition...", i);
-                        FlairConfig.INSTANCE.CONDITIONS.add(parseIf(args));
+                        parseIfGeneric(args);
                     }
                     case "allowspam" -> FlairConfig.INSTANCE.ALLOW_SPAM = true;
                     default -> error(String.format("Unknown command: %s", command), i);
@@ -60,26 +70,62 @@ public class Parser {
         }
     }
 
-    public static void parseSet(ListPointer<String> args) throws ConfigParseException {
+    private static void parseIfGeneric(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
-            throw new ConfigParseException("Expected an item and a sound to play...");
+            throw new ConfigParseException("Expected either 'item' or 'block'...");
         }
-        MetaLocation item = MetaLocation.parse(args.eat());
-        if (!GameData.getItemRegistry().containsKey(item.toRegistry())) {
-            throw new ConfigParseException(String.format("Item not found: %s", item));
-        }
-        if (args.isEnd()) {
-            throw new ConfigParseException("Expected either 'play' or 'playblocksound'...");
+        String type = args.eat();
+        IfType ifType = IfType.fromString(type);
+        if (ifType == null) {
+            throw new ConfigParseException(String.format("Unknown type: %s... expected 'item' or 'block", type));
         }
 
-        FlairConfig.INSTANCE.ITEM_SOUNDS.put(item.toString(), parseSoundGenerator(args));
+        switch (ifType) {
+            case ITEM -> FlairConfig.INSTANCE.ITEM_CONDITIONS.add(parseItemIf(args));
+            case BLOCK -> FlairConfig.INSTANCE.BLOCK_CONDITIONS.add(parseBlockIf(args));
+        }
     }
 
-    public static ConditionalExpression parseIfExpression(ListPointer<String> args) throws ConfigParseException {
+    public static void parseSetGeneric(ListPointer<String> args) throws ConfigParseException {
+        if (args.isEnd()) {
+            throw new ConfigParseException("Expected either 'item' or 'block'...");
+        }
+        String type = args.eat();
+        IfType ifType = IfType.fromString(type);
+        if (ifType == null) {
+            throw new ConfigParseException(String.format("Unknown type: %s... expected 'item' or 'block'", type));
+        }
+
+        switch (ifType) {
+            case ITEM -> parseSetGeneric(
+                    args, GameData.getItemRegistry()::containsKey,
+                    args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new),
+                    FlairConfig.INSTANCE.ITEM_SOUNDS::put
+            );
+            case BLOCK -> parseSetGeneric(args, GameData.getItemRegistry()::containsKey,
+                    args1 -> parseSoundGenerator(args1, BlockSoundGenerator::new),
+                    FlairConfig.INSTANCE.BLOCK_SOUNDS::put
+            );
+        }
+    }
+
+    public static <T> void parseSetGeneric(ListPointer<String> args, Predicate<String> validator, SoundGeneratorParser<T> parser, BiConsumer<String, ISoundGenerator<T>> consumer) throws ConfigParseException {
+        if (args.isEnd()) {
+            throw new ConfigParseException("Expected an id...");
+        }
+        MetaLocation id = MetaLocation.parse(args.eat());
+        if (!validator.test(id.toRegistry())) {
+            throw new ConfigParseException(String.format("'%s' is not a valid object...", id));
+        }
+        consumer.accept(id.toString(), parser.parse(args));
+    }
+
+
+    public static <T> Expression<T> parseIfExpression(ListPointer<String> args, VariableTypeFactory<T> factory) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a variable type... <variable> <comparison> <argument>");
         }
-        VariableType variable = VariableType.fromString(args.eat());
+        VariableType<T> variable = factory.create(args.eat());
         if (variable == null) throw new ConfigParseException("Unknown variable type: " + args.prev());
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a comparison method...");
@@ -91,7 +137,7 @@ public class Parser {
         }
         Object obj = variable.convert(args.eat());
         if (obj == null) throw new ConfigParseException("Unknown argument type: " + args.prev());
-        return new ConditionalExpression(variable, condition, obj);
+        return new IfExpression<>(variable, condition, obj);
     }
 
     public static void parseVolume(ListPointer<String> args) throws ConfigParseException {
@@ -110,28 +156,14 @@ public class Parser {
             throw new ConfigParseException("Expected a sound to play...");
         }
         String sound = args.eat();
-        float volume = 1.0f;
-        float pitch = 1.0f;
-        if (args.hasNext()) {
-            try {
-                volume = Float.parseFloat(args.eat());
-            } catch (NumberFormatException e) {
-                throw new ConfigParseException("Volume must be a number...");
-            }
-        }
-        if (args.hasNext()) {
-            try {
-                pitch = Float.parseFloat(args.eat());
-            } catch (NumberFormatException e) {
-                throw new ConfigParseException("Pitch must be a number...");
-            }
-        }
+        float volume = args.hasNext() ? parseFloat(args) : 1.0f;
+        float pitch = args.hasNext() ? parseFloat(args) : 1.0f;
         FlairConfig.INSTANCE.DEFAULT_SOUND = new SoundData(sound, volume, pitch);
     }
 
-    public static ItemCondition parseIf(ListPointer<String> args) throws ConfigParseException {
+    public static <T> SoundCondition<T> parseIf(ListPointer<String> args, ExpressionParser<T> expressionFactory, SoundGeneratorParser<T> soundGeneratorParser) throws ConfigParseException {
         if (args.peek().equals("if")) args.skip();
-        Expression main = parseIfExpression(args);
+        Expression<T> main = expressionFactory.parse(args);
         while (true) {
             if (args.isEnd()) {
                 throw new ConfigParseException("Expected and, or, play, etc...");
@@ -139,74 +171,81 @@ public class Parser {
             String arg = args.peek().toLowerCase();
             if (arg.equals("and") || arg.equals("or")) {
                 args.skip();
-                Expression expression = parseIfExpression(args);
-                BinaryOperator operator = arg.equals("and") ? BinaryOperator.AND : BinaryOperator.OR;
-                main = new BinaryExpression(main, expression, operator);
+                Expression<T> expression = expressionFactory.parse(args);
+                main = new BinaryExpression<>(main, expression, BinaryOperator.fromString(arg));
             } else break;
         }
 
-        return new ItemCondition(main, parseSoundGenerator(args));
+        return new SoundCondition<>(main, soundGeneratorParser.parse(args));
     }
 
-    public static ISoundGenerator parseSoundGenerator(ListPointer<String> args) throws ConfigParseException {
-        return switch(args.peek().toLowerCase()) {
-            case "play" -> {
+    public static SoundCondition<ItemStack> parseItemIf(ListPointer<String> args) throws ConfigParseException {
+        return parseIf(args, args1 -> parseIfExpression(args1, ItemVariableType::fromString),
+                args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new));
+    }
+
+    public static SoundCondition<BlockInstance> parseBlockIf(ListPointer<String> args) throws ConfigParseException {
+        return parseIf(args, args1 -> parseIfExpression(args1, BlockVariableType::fromString),
+                args1 -> parseSoundGenerator(args1, BlockSoundGenerator::new));
+    }
+
+    public static float parseFloat(ListPointer<String> args) throws ConfigParseException {
+        try {
+            return Float.parseFloat(args.eat());
+        } catch (NumberFormatException e) {
+            throw new ConfigParseException("Expected a number... " + args.prev());
+        }
+    }
+
+    public static <T> ISoundGenerator<T> parseSoundGenerator(ListPointer<String> args, SoundGeneratorFactory<T> blockSoundFactory) throws ConfigParseException {
+        if (args.isEnd()) {
+            throw new ConfigParseException("Expected either 'play' or 'playblocksound'...");
+        }
+
+        SoundGeneratorType type = SoundGeneratorType.fromString(args.eat());
+        if (type == null) throw new ConfigParseException("Unknown sound generator type: %s", args.prev());
+
+        return switch (type) {
+            case PLAY -> {
                 if (args.isEnd()) {
                     throw new ConfigParseException("Expected a sound to play...");
                 }
-                args.skip();
                 String sound = args.eat();
-                float volume = 1.0f;
-                float pitch = 1.0f;
-                if (args.hasNext()) {
-                    try {
-                        volume = Float.parseFloat(args.eat());
-                    } catch (NumberFormatException e) {
-                        throw new ConfigParseException("Volume must be a number...");
-                    }
-                }
-                if (args.hasNext()) {
-                    try {
-                        pitch = Float.parseFloat(args.eat());
-                    } catch (NumberFormatException e) {
-                        throw new ConfigParseException("Pitch must be a number...");
-                    }
-                }
-
-                yield new NormalSoundGenerator(sound, volume, pitch);
+                float volume = args.hasNext() ? parseFloat(args) : 1.0f;
+                float pitch = args.hasNext() ? parseFloat(args) : 1.0f;
+                yield new NormalSoundGenerator<>(sound, volume, pitch);
             }
-            case "playblocksound" -> {
+            case PLAYBLOCKSOUND -> {
                 if (args.isEnd()) {
                     throw new ConfigParseException("Expected a sound type to play...");
                 }
-                args.skip();
                 String soundTypeStr = args.eat();
                 BlockSoundType soundType = BlockSoundType.fromString(soundTypeStr);
                 if (soundType == null) {
-                    throw new ConfigParseException(String.format("Unknown sound type: %s", soundTypeStr));
+                    throw new ConfigParseException("Unknown sound type: '%s'... either 'step' or 'break", soundTypeStr);
                 }
 
-                float volume = 1.0f;
-                float pitch = 1.0f;
-                if (args.hasNext()) {
-                    try {
-                        volume = Float.parseFloat(args.eat());
-                    } catch (NumberFormatException e) {
-                        throw new ConfigParseException("Volume must be a number...");
-                    }
-                }
-                if (args.hasNext()) {
-                    try {
-                        pitch = Float.parseFloat(args.eat());
-                    } catch (NumberFormatException e) {
-                        throw new ConfigParseException("Pitch must be a number...");
-                    }
-                }
-                yield new BlockSoundGenerator(soundType, volume, pitch);
-            }
-            default -> {
-                throw new ConfigParseException("Expected either 'play' or 'playblocksound'...");
+                float volume = args.hasNext() ? parseFloat(args) : 1.0f;
+                float pitch = args.hasNext() ? parseFloat(args) : 1.0f;
+                yield blockSoundFactory.create(soundType, volume, pitch);
             }
         };
+    }
+
+
+    public interface ExpressionParser<T> {
+        Expression<T> parse(ListPointer<String> args) throws ConfigParseException;
+    }
+
+    public interface SoundGeneratorParser<T> {
+        ISoundGenerator<T> parse(ListPointer<String> args) throws ConfigParseException;
+    }
+
+    public interface SoundGeneratorFactory<T> {
+        ISoundGenerator<T> create(BlockSoundType type, float volume, float pitch) throws ConfigParseException;
+    }
+
+    public interface VariableTypeFactory<T> {
+        VariableType<T> create(String str);
     }
 }

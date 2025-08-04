@@ -1,11 +1,9 @@
 package me.gravityio.flair.mixins;
 
 import me.gravityio.flair.Flair;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 
 @Mixin(Container.class)
-public class SlotMixin {
+public class SlotClickMixin {
     @Shadow List<net.minecraft.inventory.Slot> inventorySlots;
 
     // MODE 0 == PICKUP, PLACE | MOUSEBUTTON IS REAL
@@ -32,7 +30,8 @@ public class SlotMixin {
             at = @At("HEAD")
     )
     private void flair$playHotbarSound(int slotId, int button, int mode, EntityPlayer player, CallbackInfoReturnable<ItemStack> ci) {
-        if (!Minecraft.getMinecraft().func_152345_ab()) return;
+        if (!Flair.isClientThread()) return;
+
         if (slotId < 0 || slotId >= this.inventorySlots.size()) return;
         ItemStack stack = null;
         switch (mode) {

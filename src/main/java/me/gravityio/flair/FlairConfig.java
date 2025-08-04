@@ -3,6 +3,8 @@ package me.gravityio.flair;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import me.gravityio.flair.condition.*;
+import net.minecraft.block.Block;
+import net.minecraft.item.ItemStack;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -25,8 +27,10 @@ public class FlairConfig {
     public boolean ALLOW_SPAM = false;
     public int VOLUME = 100;
     public SoundData DEFAULT_SOUND = new SoundData("random.pop");
-    public Map<String, ISoundGenerator> ITEM_SOUNDS = new HashMap<>();
-    public List<ItemCondition> CONDITIONS = new ArrayList<>();
+    public Map<String, ISoundGenerator<BlockInstance>> BLOCK_SOUNDS = new HashMap<>();
+    public Map<String, ISoundGenerator<ItemStack>> ITEM_SOUNDS = new HashMap<>();
+    public List<SoundCondition<ItemStack>> ITEM_CONDITIONS = new ArrayList<>();
+    public List<SoundCondition<BlockInstance>> BLOCK_CONDITIONS = new ArrayList<>();
 
     public static void init(File configDirectory) {
         INSTANCE = new FlairConfig();
@@ -58,8 +62,10 @@ public class FlairConfig {
         copyDefaultConfig();
 
         try {
-            INSTANCE.CONDITIONS.clear();
+            INSTANCE.ITEM_CONDITIONS.clear();
             INSTANCE.ITEM_SOUNDS.clear();
+            INSTANCE.BLOCK_CONDITIONS.clear();
+            INSTANCE.BLOCK_SOUNDS.clear();
             Parser.parseLines(Files.readAllLines(CONFIG_FILE.toPath()).toArray(new String[0]));
         } catch (IOException e) {
             Flair.LOGGER.error("Failed to load flair config", e);
