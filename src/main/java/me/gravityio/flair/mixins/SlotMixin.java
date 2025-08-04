@@ -1,9 +1,11 @@
 package me.gravityio.flair.mixins;
 
 import me.gravityio.flair.Flair;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
+import net.minecraft.server.MinecraftServer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,20 +18,45 @@ import java.util.List;
 public class SlotMixin {
     @Shadow List<net.minecraft.inventory.Slot> inventorySlots;
 
+    // MODE 0 == PICKUP, PLACE | MOUSEBUTTON IS REAL
+    // MODE 1 == SHIFT CLICK | MOUSEBUTTON IS REAL
+    // MODE 2 == NUMBERS | MOUSEBUTTON IS SLOT INDEX
+    // MODE 3 == MIDDLE MOUSE | MOUSEBUTTON IS MIDDLE MOUSE
+    // MODE 4 == DROP | MOUSEBUTTON: 0 IS DROP 1, 1 IS DROP ALL
+    // MODE 5 == SPREAD | MOUSEBUTTON IS PACKED INT: SPREAD STAGE, AND MOUSE BUTTON
+    // MODE 6 == PICKUP ALL | MOUSE BUTTON IS REAL BUT ONLY EVER LEFT CLICK
+
     @Inject(
-        method = "slotClick",
-        at = @At("RETURN")
+
+            method = "slotClick",
+            at = @At("HEAD")
     )
-    private void test(int slotId, int clickedButton, int mode, EntityPlayer player, CallbackInfoReturnable<ItemStack> ci) {
-        ItemStack cursorStack = ci.getReturnValue();
-        if (slotId < 0 || slotId >= this.inventorySlots.size()) {
-            return;
+    private void flair$playHotbarSound(int slotId, int button, int mode, EntityPlayer player, CallbackInfoReturnable<ItemStack> ci) {
+        if (!Minecraft.getMinecraft().func_152345_ab()) return;
+        if (slotId < 0 || slotId >= this.inventorySlots.size()) return;
+        ItemStack stack = null;
+        switch (mode) {
+            case 0: {
+                stack = this.inventorySlots.get(slotId).getStack();
+                if (stack == null) stack = player.inventory.getItemStack();
+                break;
+            }
+            case 1, 3, 4: {
+                stack = this.inventorySlots.get(slotId).getStack();
+                break;
+            }
+            case 2: {
+                stack = this.inventorySlots.get(slotId).getStack();
+                if (stack == null) stack = player.inventory.getStackInSlot(button);
+                break;
+            }
+            case 5, 6: {
+                stack = player.inventory.getItemStack();
+                break;
+            }
         }
 
-        if (cursorStack == null) {
-            cursorStack = this.inventorySlots.get(slotId).getStack();
-        }
-
-        Flair.INSTANCE.playSound(cursorStack);
+        if (stack == null) return;
+        Flair.INSTANCE.playSound(stack);
     }
 }

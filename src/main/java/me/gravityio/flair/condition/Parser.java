@@ -3,9 +3,9 @@ package me.gravityio.flair.condition;
 import cpw.mods.fml.common.registry.GameData;
 import me.gravityio.flair.Flair;
 import me.gravityio.flair.FlairConfig;
+import me.gravityio.flair.MetaLocation;
 import me.gravityio.flair.util.ListPointer;
 import me.gravityio.flair.util.StringUtils;
-import net.minecraft.util.ResourceLocation;
 
 import java.util.List;
 
@@ -25,6 +25,7 @@ public class Parser {
     }
 
     public static void parseLines(String[] lines) {
+        Flair.sendMessage("Reloading Config...");
         for (int i = 0; i < lines.length; i++) {
             String line = lines[i].trim();
             if (line.startsWith("#") || line.isEmpty()) continue;
@@ -47,11 +48,10 @@ public class Parser {
                     }
                     case "if" -> {
                         info("Adding if condition...", i);
-                        FlairConfig.CONFIG.CONDITIONS.add(parseIf(args));
+                        FlairConfig.INSTANCE.CONDITIONS.add(parseIf(args));
                     }
-                    default -> {
-                        error(String.format("Unknown command: %s", command), i);
-                    }
+                    case "allowspam" -> FlairConfig.INSTANCE.ALLOW_SPAM = true;
+                    default -> error(String.format("Unknown command: %s", command), i);
                 }
             } catch (ConfigParseException e) {
                 error(e.getMessage(), i);
@@ -64,15 +64,15 @@ public class Parser {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected an item and a sound to play...");
         }
-        String item = new ResourceLocation(args.eat()).toString();
-        if (!GameData.getItemRegistry().containsKey(item)) {
+        MetaLocation item = MetaLocation.parse(args.eat());
+        if (!GameData.getItemRegistry().containsKey(item.toRegistry())) {
             throw new ConfigParseException(String.format("Item not found: %s", item));
         }
         if (args.isEnd()) {
             throw new ConfigParseException("Expected either 'play' or 'playblocksound'...");
         }
 
-        FlairConfig.CONFIG.ITEM_SOUNDS.put(item, parseSoundGenerator(args));
+        FlairConfig.INSTANCE.ITEM_SOUNDS.put(item.toString(), parseSoundGenerator(args));
     }
 
     public static ConditionalExpression parseIfExpression(ListPointer<String> args) throws ConfigParseException {
@@ -102,7 +102,7 @@ public class Parser {
         if (volume < 0 || volume > 100) {
             throw new ConfigParseException("Volume must be between 0 and 100...");
         }
-        FlairConfig.CONFIG.VOLUME = volume;
+        FlairConfig.INSTANCE.VOLUME = volume;
     }
 
     public static void parseDefault(ListPointer<String> args) throws ConfigParseException {
@@ -126,7 +126,7 @@ public class Parser {
                 throw new ConfigParseException("Pitch must be a number...");
             }
         }
-        FlairConfig.CONFIG.DEFAULT_SOUND = new SoundData(sound, volume, pitch);
+        FlairConfig.INSTANCE.DEFAULT_SOUND = new SoundData(sound, volume, pitch);
     }
 
     public static ItemCondition parseIf(ListPointer<String> args) throws ConfigParseException {

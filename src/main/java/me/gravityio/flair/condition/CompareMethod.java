@@ -1,9 +1,23 @@
 package me.gravityio.flair.condition;
 
+import me.gravityio.flair.Flair;
+import net.minecraft.util.EnumChatFormatting;
+
 import java.util.function.BiPredicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public enum CompareMethod {
     CONTAINS("contains", (a, b) -> ((String) a).toLowerCase().contains(((String) b).toLowerCase())),
+    MATCHES("matches", (a, b) -> {
+        try {
+            Pattern pattern = Pattern.compile((String) b);
+            return pattern.matcher((String) a).matches();
+        } catch (PatternSyntaxException e) {
+            Flair.sendMessage("Invalid regex '%s'", EnumChatFormatting.RED, b);
+            return false;
+        }
+    }),
     EQUALS("is", Object::equals),
     NEQUALS("isnt", (a, b) -> !a.equals(b));
 

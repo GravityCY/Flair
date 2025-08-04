@@ -79,17 +79,21 @@ public class Flair {
     public static SoundData getSound(ItemStack stack) {
         if (stack == null) return null;
 
+        ISoundGenerator sound;
         String name = GameData.getItemRegistry().getNameForObject(stack.getItem());
         if (stack.getHasSubtypes()) {
-            name = name + ":" + stack.getItemDamage();
+            sound = FlairConfig.INSTANCE.ITEM_SOUNDS.get(name + "@" + stack.getItemDamage());
+            if (sound == null) sound = FlairConfig.INSTANCE.ITEM_SOUNDS.get(name);
+        } else {
+            sound = FlairConfig.INSTANCE.ITEM_SOUNDS.get(name);
         }
-        ISoundGenerator sound = FlairConfig.CONFIG.ITEM_SOUNDS.get(name);
+
         if (sound == null) {
-            for (ItemCondition condition : FlairConfig.CONFIG.CONDITIONS) {
+            for (ItemCondition condition : FlairConfig.INSTANCE.CONDITIONS) {
                 if (!condition.shouldPlay(stack)) continue;
                 return condition.getSound(stack);
             }
-            return FlairConfig.CONFIG.DEFAULT_SOUND;
+            return FlairConfig.INSTANCE.DEFAULT_SOUND;
         }
         return sound.getSound(stack);
     }
@@ -103,11 +107,11 @@ public class Flair {
         if (sound == null) return;
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer == null) return;
-        if (System.currentTimeMillis() - this.lastSound < 100) return;
+        if (!FlairConfig.INSTANCE.ALLOW_SPAM && System.currentTimeMillis() == this.lastSound) return;
 
         // FOR THE MIXIN MOD
         ourSound = true;
-        mc.thePlayer.playSound(sound.sound, sound.volume * FlairConfig.CONFIG.VOLUME / 100f, sound.pitch);
+        mc.thePlayer.playSound(sound.sound, sound.volume * FlairConfig.INSTANCE.VOLUME / 100f, sound.pitch);
 
         this.lastSound = System.currentTimeMillis();
     }
