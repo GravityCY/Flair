@@ -7,12 +7,13 @@ import me.gravityio.flair.FlairConfig;
 import me.gravityio.flair.MetaLocation;
 import me.gravityio.flair.util.ListPointer;
 import me.gravityio.flair.util.StringUtils;
-import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class Parser {
     public static class ConfigParseException extends Exception {
@@ -120,7 +121,6 @@ public class Parser {
         consumer.accept(id.toString(), parser.parse(args));
     }
 
-
     public static <T> Expression<T> parseIfExpression(ListPointer<String> args, VariableTypeFactory<T> factory) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a variable type... <variable> <comparison> <argument>");
@@ -130,14 +130,19 @@ public class Parser {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a comparison method...");
         }
-        CompareMethod condition = CompareMethod.fromString(args.eat());
-        if (condition == null) throw new ConfigParseException("Unknown comparison method: " + args.prev());
+        CompareMethod comparator = CompareMethod.fromString(args.eat());
+        if (comparator == null) throw new ConfigParseException("Unknown comparison method: " + args.prev());
+        if (!variable.isValidComparison(comparator)) {
+            String valid = Arrays.stream(variable.getComparators()).map(m -> m.str).collect(Collectors.joining());
+            throw new ConfigParseException("Invalid comparison method '%s', Variable '%s' can only accept '%s'",
+                    comparator.str, variable.getSyntaxString(), valid);
+        }
         if (args.isEnd()) {
             throw new ConfigParseException("Expected an argument...");
         }
         Object obj = variable.convert(args.eat());
         if (obj == null) throw new ConfigParseException("Unknown argument type: " + args.prev());
-        return new IfExpression<>(variable, condition, obj);
+        return new IfExpression<>(variable, comparator, obj);
     }
 
     public static void parseVolume(ListPointer<String> args) throws ConfigParseException {
@@ -231,7 +236,6 @@ public class Parser {
             }
         };
     }
-
 
     public interface ExpressionParser<T> {
         Expression<T> parse(ListPointer<String> args) throws ConfigParseException;

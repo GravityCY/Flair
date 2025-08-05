@@ -3,25 +3,32 @@ package me.gravityio.flair.condition;
 import cpw.mods.fml.common.registry.GameData;
 import me.gravityio.flair.BlockInstance;
 import me.gravityio.flair.Flair;
-import net.minecraft.block.Block;
-import net.minecraft.client.Minecraft;
-import net.minecraft.item.Item;
-import net.minecraft.util.MovingObjectPosition;
 
 import java.util.function.Function;
 
 public enum BlockVariableType implements VariableType<BlockInstance> {
-    BLOCK_DISPLAY_NAME("DisplayName", str -> str, blockInstance -> ItemVariableType.ITEM_DISPLAY_NAME.getValue(Flair.getIdentifierStack(blockInstance))),
-    BLOCK_ID("Id", str -> str, block -> GameData.getBlockRegistry().getNameForObject(block));
+    BLOCK_DISPLAY_NAME("DisplayName", str -> str,
+            blockInstance -> ItemVariableType.ITEM_DISPLAY_NAME.getValue(Flair.getIdentifierStack(blockInstance))),
+    BLOCK_ID("Id", str -> str, block -> GameData.getBlockRegistry().getNameForObject(block)),
+    BLOCK_META("Meta", Integer::parseInt, block -> block.world.getBlockMetadata(block.x, block.y, block.z)),
+    BLOCK_HAS_ENTITY("HasEntity", Boolean::parseBoolean,
+            block -> block.world.getTileEntity(block.x, block.y, block.z) != null);
 
     private final String str;
     private final Function<BlockInstance, Object> valueGetter;
     private final Function<String, Object> typeConverter;
+    private final CompareMethod[] compareMethods;
 
-    BlockVariableType(String str, Function<String, Object> typeConverter, Function<BlockInstance, Object> valueGetter) {
+    BlockVariableType(String str, Function<String, Object> typeConverter, Function<BlockInstance, Object> valueGetter, CompareMethod... compareMethods) {
         this.str = "$" + str;
         this.typeConverter = typeConverter;
         this.valueGetter = valueGetter;
+        this.compareMethods = compareMethods;
+    }
+
+    @Override
+    public String getSyntaxString() {
+        return this.str;
     }
 
     @Override
@@ -32,6 +39,19 @@ public enum BlockVariableType implements VariableType<BlockInstance> {
     @Override
     public Object convert(String str) {
         return this.typeConverter.apply(str);
+    }
+
+    @Override
+    public CompareMethod[] getComparators() {
+        return this.compareMethods;
+    }
+
+    @Override
+    public boolean isValidComparison(CompareMethod comparator) {
+        for (CompareMethod type : this.compareMethods) {
+            if (type.equals(comparator)) return true;
+        }
+        return false;
     }
 
     public static VariableType<BlockInstance> fromString(String str) {

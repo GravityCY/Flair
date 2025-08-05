@@ -1,8 +1,9 @@
 package me.gravityio.flair.condition;
 
-import net.minecraft.item.ItemStack;
-
 public interface VariableType<T> {
+    String getSyntaxString();
     Object getValue(T stack);
     Object convert(String str);
+    CompareMethod[] getComparators();
+    boolean isValidComparison(CompareMethod comparator);
 }
