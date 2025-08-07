@@ -3,6 +3,8 @@ A clientside mod that adds sound effects to stuff and things
 
 **Minecraft Forge 1.7.10**
 
+___
+
 Right now adds sounds for:
 - Interacting with items in your inventory
 - Crafting
@@ -55,7 +57,7 @@ ___
 
 ## Thoughts
 
-While editing my GT: New Horizons videos, I noticed how quiet the UI interactions were. I often ended up manually adding sound effects during editing just to make the game feel more satisfying. Flair was born from that need, to automate and personalize the audio feedback of everyday interactions in Minecraft.
+While editing my GT: New Horizons videos. I often ended up manually adding sound effects during editing just to make the game feel more satisfying, so I 
 
 
 
