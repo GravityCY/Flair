@@ -20,6 +20,8 @@ ___
 ___
 
 ## What the config looks like 
+To properly learn how to configure stuff, please look at the default config generated! As soon as you join a world run /flair config to look at the default config! It explains a lot more there!
+
 The config allows you to control what sounds should play for what items.<br>
 You can define rules like:
 
