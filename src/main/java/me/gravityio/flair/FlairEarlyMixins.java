@@ -43,7 +43,7 @@ public class FlairEarlyMixins implements IFMLLoadingPlugin, IEarlyMixinLoader {
 
     @Override
     public String getMixinConfig() {
-        return "mixins.flair.early.json";
+        return "mixins.flair.vanilla.json";
     }
 
     @Override
@@ -52,7 +52,6 @@ public class FlairEarlyMixins implements IFMLLoadingPlugin, IEarlyMixinLoader {
             return Arrays.asList(
                     "DropStackMixin",
                     "SlotClickMixin",
-                    "NEIRecipeClickMixin",
                     "SoundCategoryMixin",
                     "ChangeSlotMixin",
                     "SignEventMixin",

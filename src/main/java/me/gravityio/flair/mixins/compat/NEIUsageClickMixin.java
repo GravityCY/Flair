@@ -1,4 +1,4 @@
-package me.gravityio.flair.mixins;
+package me.gravityio.flair.mixins.compat;
 
 import codechicken.nei.recipe.GuiUsageRecipe;
 import me.gravityio.flair.Flair;
@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@SuppressWarnings("UnusedMixin")
 @Mixin(value = GuiUsageRecipe.class)
 public class NEIUsageClickMixin {
 

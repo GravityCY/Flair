@@ -1,11 +1,9 @@
-package me.gravityio.flair.mixins;
+package me.gravityio.flair.mixins.compat;
 
 import codechicken.nei.recipe.GuiCraftingRecipe;
 import codechicken.nei.recipe.GuiRecipe;
 import me.gravityio.flair.Flair;
-import net.minecraft.client.Minecraft;
 import net.minecraft.item.ItemStack;
-import org.spongepowered.asm.mixin.Debug;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

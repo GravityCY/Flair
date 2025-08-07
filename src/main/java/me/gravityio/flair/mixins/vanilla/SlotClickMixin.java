@@ -1,4 +1,4 @@
-package me.gravityio.flair.mixins;
+package me.gravityio.flair.mixins.vanilla;
 
 import me.gravityio.flair.Flair;
 import net.minecraft.entity.player.EntityPlayer;

@@ -1,4 +1,4 @@
-package me.gravityio.flair.mixins;
+package me.gravityio.flair.mixins.vanilla;
 
 import me.gravityio.flair.event.HotbarChangedEvent;
 import net.minecraft.client.Minecraft;

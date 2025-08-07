@@ -1,8 +1,8 @@
-package me.gravityio.flair.mixins;
+package me.gravityio.flair.mixins.vanilla;
 
-import me.gravityio.flair.event.SignEvent;
-import net.minecraft.client.gui.inventory.GuiEditSign;
-import net.minecraft.tileentity.TileEntitySign;
+import me.gravityio.flair.event.ChatTypingEvent;
+import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.gui.GuiTextField;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -11,13 +11,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @SuppressWarnings("UnusedMixin")
-@Mixin(GuiEditSign.class)
-public class SignEventMixin {
-    @Shadow
-    private TileEntitySign tileSign;
+@Mixin(GuiChat.class)
+public class ChatTypingMixin {
 
     @Shadow
-    private int editLine;
+    protected GuiTextField inputField;
 
     @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
@@ -27,6 +25,6 @@ public class SignEventMixin {
             )
     )
     private void flair$onKeyTyped(char typedChar, int keyCode, CallbackInfo ci) {
-        MinecraftForge.EVENT_BUS.post(new SignEvent(this.tileSign.signText, typedChar, this.editLine));
+        MinecraftForge.EVENT_BUS.post(new ChatTypingEvent(this.inputField, typedChar, keyCode));
     }
 }

@@ -1,7 +1,8 @@
-package me.gravityio.flair.mixins;
+package me.gravityio.flair.mixins.vanilla;
 
-import me.gravityio.flair.event.ChatTypingEvent;
-import net.minecraft.client.gui.GuiChat;
+
+import me.gravityio.flair.event.AnvilTypingEvent;
+import net.minecraft.client.gui.GuiRepair;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,20 +12,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @SuppressWarnings("UnusedMixin")
-@Mixin(GuiChat.class)
-public class ChatTypingMixin {
-
+@Mixin(GuiRepair.class)
+public class AnvilTypingMixin
+{
     @Shadow
-    protected GuiTextField inputField;
+    GuiTextField field_147091_w;
 
     @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
             method = "keyTyped",
             at = @At(
-                    "HEAD"
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GuiTextField;textboxKeyTyped(CI)Z"
             )
     )
     private void flair$onKeyTyped(char typedChar, int keyCode, CallbackInfo ci) {
-        MinecraftForge.EVENT_BUS.post(new ChatTypingEvent(this.inputField, typedChar, keyCode));
+        MinecraftForge.EVENT_BUS.post(new AnvilTypingEvent(typedChar, keyCode, this.field_147091_w));
     }
+
 }
