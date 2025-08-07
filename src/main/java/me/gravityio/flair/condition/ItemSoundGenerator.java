@@ -17,6 +17,7 @@ public class ItemSoundGenerator implements ISoundGenerator<ItemStack> {
 
     @Override
     public SoundData getSound(ItemStack stack) {
+        if (stack == null) return null;
         if (!(stack.getItem() instanceof ItemBlock itemBlock)) return null;
 
         Block block = itemBlock.field_150939_a;

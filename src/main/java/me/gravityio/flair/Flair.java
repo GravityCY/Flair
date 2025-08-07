@@ -182,6 +182,7 @@ public class Flair {
                 if (!condition.shouldPlay(stack)) continue;
                 return condition.getSound(stack);
             }
+            if (FlairConfig.INSTANCE.DEFAULT_SOUND == null) return null;
             return FlairConfig.INSTANCE.DEFAULT_SOUND.getSound(stack);
         }
         return sound.getSound(stack);
