@@ -1,13 +1,6 @@
 package me.gravityio.flair;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import com.gtnewhorizon.gtnhmixins.IEarlyMixinLoader;
-
 import cpw.mods.fml.relauncher.FMLLaunchHandler;
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin;
 import cpw.mods.fml.relauncher.IFMLLoadingPlugin.MCVersion;
@@ -16,6 +9,9 @@ import cpw.mods.fml.relauncher.IFMLLoadingPlugin.TransformerExclusions;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 
+import java.util.*;
+
+@SuppressWarnings("unused")
 @SideOnly(Side.CLIENT)
 @TransformerExclusions("me.gravityio.flair.FlairCore")
 @MCVersion("1.7.10")
@@ -37,7 +33,8 @@ public class FlairEarlyMixins implements IFMLLoadingPlugin, IEarlyMixinLoader {
     }
 
     @Override
-    public void injectData(Map<String, Object> data) {}
+    public void injectData(Map<String, Object> data) {
+    }
 
     @Override
     public String getAccessTransformerClass() {
@@ -52,7 +49,16 @@ public class FlairEarlyMixins implements IFMLLoadingPlugin, IEarlyMixinLoader {
     @Override
     public List<String> getMixins(Set<String> loadedCoreMods) {
         if (FMLLaunchHandler.side() == Side.CLIENT) {
-            return Arrays.asList("SlotClickMixin", "NEIRecipeClickMixin", "SoundCategoryMixin", "ChangeSlotMixin");
+            return Arrays.asList(
+                    "DropStackMixin",
+                    "SlotClickMixin",
+                    "NEIRecipeClickMixin",
+                    "SoundCategoryMixin",
+                    "ChangeSlotMixin",
+                    "SignEventMixin",
+                    "ChatTypingMixin",
+                    "AnvilTypingMixin"
+            );
         }
         return Collections.emptyList();
     }

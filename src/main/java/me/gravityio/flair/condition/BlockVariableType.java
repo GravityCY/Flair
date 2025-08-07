@@ -7,28 +7,32 @@ import me.gravityio.flair.Flair;
 import java.util.function.Function;
 
 public enum BlockVariableType implements VariableType<BlockInstance> {
+
     BLOCK_DISPLAY_NAME(
             "DisplayName",
             str -> str,
             blockInstance -> ItemVariableType.ITEM_DISPLAY_NAME.getValue(Flair.getIdentifierStack(blockInstance)),
             CompareMethod.CONTAINS, CompareMethod.MATCHES, CompareMethod.EQUALS, CompareMethod.NEQUALS
     ),
+
     BLOCK_ID(
             "Id",
             str -> str,
             block -> GameData.getBlockRegistry().getNameForObject(block),
             CompareMethod.CONTAINS, CompareMethod.MATCHES, CompareMethod.EQUALS, CompareMethod.NEQUALS
     ),
+
     BLOCK_META(
             "Meta",
             Integer::parseInt,
-            block -> block.world.getBlockMetadata(block.x, block.y, block.z),
+            block -> block.meta,
             CompareMethod.EQUALS, CompareMethod.NEQUALS
     ),
+
     BLOCK_HAS_ENTITY(
             "HasEntity",
             Boolean::parseBoolean,
-            block -> block.world.getTileEntity(block.x, block.y, block.z) != null,
+            block -> block.tileEntity != null,
             CompareMethod.EQUALS, CompareMethod.NEQUALS
     );
 

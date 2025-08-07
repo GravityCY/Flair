@@ -3,6 +3,7 @@ package me.gravityio.flair.condition;
 import me.gravityio.flair.Flair;
 import net.minecraft.util.EnumChatFormatting;
 
+import java.util.Objects;
 import java.util.function.BiPredicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -22,6 +23,7 @@ public enum CompareMethod {
         }
         return false;
     }),
+
     MATCHES("matches", (obj, stringPattern) -> {
         if (obj instanceof String) {
             try {
@@ -46,8 +48,34 @@ public enum CompareMethod {
         }
         return false;
     }),
-    EQUALS("is", Object::equals),
-    NEQUALS("isnt", (a, b) -> !a.equals(b));
+
+    EQUALS("is", (obj, test) -> {
+        if (obj instanceof Object[]) {
+            for (Object o : (Object[]) obj) {
+                if (o.equals(test)) {
+                    return true;
+                }
+            }
+        } else {
+            return Objects.equals(obj, test);
+        }
+
+        return false;
+    }),
+
+    NEQUALS("isnt", (obj, test) -> {
+        if (obj instanceof Object[]) {
+            for (Object o : (Object[]) obj) {
+                if (Objects.equals(o, test)) {
+                    return true;
+                }
+            }
+        } else {
+            return Objects.equals(obj, test);
+        }
+
+        return false;
+    });
 
     public final String str;
     private final BiPredicate<Object, Object> predicate;

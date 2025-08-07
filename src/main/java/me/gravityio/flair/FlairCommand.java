@@ -150,6 +150,7 @@ public class FlairCommand extends CommandBase {
                 );
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(
                         new StringSelection("set block " + idStr + "@" + meta + " play random.pop"), null);
+
             }
             case "config" -> {
                 try {
@@ -157,6 +158,18 @@ public class FlairCommand extends CommandBase {
                     Desktop.getDesktop().open(FlairConfig.CONFIG_FILE);
                 } catch (IOException e) {
                     Flair.LOGGER.error("Failed to open flair config", e);
+                }
+            }
+            case "log" -> {
+                if (args.isEnd()) {
+                    Flair.sendMessage("Expected log type... (screens, sounds)");
+                    return;
+                }
+
+                String typeStr = args.eat();
+                switch (typeStr) {
+                    case "screens" -> Flair.INSTANCE.logScreens();
+                    case "sounds" -> Flair.INSTANCE.logSounds();
                 }
             }
         }
@@ -169,7 +182,7 @@ public class FlairCommand extends CommandBase {
 
     @Override
     public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
-        if (args.length == 1) return Lists.newArrayList("find", "play", "hand", "block", "config");
+        if (args.length == 1) return Lists.newArrayList("find", "play", "hand", "block", "config", "log");
         return null;
     }
 }

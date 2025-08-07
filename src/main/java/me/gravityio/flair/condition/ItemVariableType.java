@@ -8,11 +8,20 @@ import net.minecraftforge.oredict.OreDictionary;
 import java.util.function.Function;
 
 public enum ItemVariableType implements VariableType<ItemStack> {
-    ITEM_DISPLAY_NAME("DisplayName", str -> str, ItemStack::getDisplayName, CompareMethod.CONTAINS, CompareMethod.MATCHES, CompareMethod.EQUALS, CompareMethod.NEQUALS),
-    ITEM_ID("Id", str -> str, stack -> GameData.getItemRegistry().getNameForObject(stack.getItem()), CompareMethod.CONTAINS, CompareMethod.MATCHES, CompareMethod.EQUALS, CompareMethod.NEQUALS),
-    ITEM_OREDICT("OreDict", str -> str, ItemVariableType::getOreDictNames, CompareMethod.CONTAINS, CompareMethod.MATCHES),
+
+    ITEM_DISPLAY_NAME("DisplayName", str -> str, ItemStack::getDisplayName, CompareMethod.CONTAINS,
+            CompareMethod.MATCHES, CompareMethod.EQUALS, CompareMethod.NEQUALS),
+
+    ITEM_ID("Id", str -> str, stack -> GameData.getItemRegistry().getNameForObject(stack.getItem()),
+            CompareMethod.CONTAINS, CompareMethod.MATCHES, CompareMethod.EQUALS, CompareMethod.NEQUALS),
+
+    ITEM_OREDICT("OreDict", str -> str, ItemVariableType::getOreDictNames, CompareMethod.CONTAINS,
+            CompareMethod.MATCHES, CompareMethod.EQUALS, CompareMethod.NEQUALS),
+
     ITEM_DAMAGE("Damage", Integer::parseInt, ItemStack::getItemDamage, CompareMethod.EQUALS, CompareMethod.NEQUALS),
-    IS_BLOCK_ITEM("IsBlock", Boolean::parseBoolean, stack -> stack.getItem() instanceof ItemBlock, CompareMethod.EQUALS, CompareMethod.NEQUALS),;
+
+    IS_BLOCK_ITEM("IsBlock", Boolean::parseBoolean, stack -> stack.getItem() instanceof ItemBlock, CompareMethod.EQUALS,
+            CompareMethod.NEQUALS);
 
     public static String[] getOreDictNames(ItemStack stack) {
         int[] names = OreDictionary.getOreIDs(stack);

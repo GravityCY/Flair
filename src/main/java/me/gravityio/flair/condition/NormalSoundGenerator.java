@@ -12,7 +12,7 @@ public class NormalSoundGenerator<T> implements ISoundGenerator<T> {
     }
 
     @Override
-    public SoundData getSound(T stack) {
+    public SoundData getSound(T unused) {
         return new SoundData(this.soundToPlay, this.volume, this.pitch);
     }
 }

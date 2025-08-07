@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
+@SuppressWarnings("UnusedMixin")
 @Mixin(Container.class)
 public class SlotClickMixin {
     @Shadow List<net.minecraft.inventory.Slot> inventorySlots;
@@ -24,6 +25,7 @@ public class SlotClickMixin {
     // MODE 5 == SPREAD | MOUSEBUTTON IS PACKED INT: SPREAD STAGE, AND MOUSE BUTTON
     // MODE 6 == PICKUP ALL | MOUSE BUTTON IS REAL BUT ONLY EVER LEFT CLICK
 
+    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
 
             method = "slotClick",
@@ -40,7 +42,7 @@ public class SlotClickMixin {
                 if (stack == null) stack = player.inventory.getItemStack();
                 break;
             }
-            case 1, 3, 4: {
+            case 1, 3: {
                 stack = this.inventorySlots.get(slotId).getStack();
                 break;
             }

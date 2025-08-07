@@ -3,13 +3,10 @@ package me.gravityio.flair;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import me.gravityio.flair.condition.*;
-import net.minecraft.block.Block;
+import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.item.ItemStack;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +16,8 @@ import java.util.Map;
 @SideOnly(Side.CLIENT)
 public class FlairConfig {
     public static final String CONFIG_FILENAME = "flair.config";
+    public static final String SOUND_LOG_NAME = "sounds.log";
+    public static final String SCREEN_LOG_NAME = "screens.log";
 
     public static FlairConfig INSTANCE;
     public static File CONFIG_DIRECTORY;
@@ -26,7 +25,12 @@ public class FlairConfig {
 
     public boolean ALLOW_SPAM = false;
     public int VOLUME = 100;
-    public SoundData DEFAULT_SOUND = new SoundData("random.pop");
+    public ISoundGenerator<ItemStack> DEFAULT_SOUND;
+    public ISoundGenerator<ItemStack> DEFAULT_CRAFTING_SOUND;
+    public ISoundGenerator<?> DEFAULT_TYPING_SOUND;
+    public ISoundGenerator<?> DEFAULT_INV_SOUND;
+    public ISoundGenerator<ItemStack> DEFAULT_DROP_SOUND;
+    public Map<String, ISoundGenerator<GuiScreen>> SCREEN_SOUNDS = new HashMap<>();
     public Map<String, ISoundGenerator<BlockInstance>> BLOCK_SOUNDS = new HashMap<>();
     public Map<String, ISoundGenerator<ItemStack>> ITEM_SOUNDS = new HashMap<>();
     public List<SoundCondition<ItemStack>> ITEM_CONDITIONS = new ArrayList<>();
@@ -35,6 +39,8 @@ public class FlairConfig {
     public static void init(File configDirectory) {
         INSTANCE = new FlairConfig();
         CONFIG_DIRECTORY = new File(configDirectory, "flair");
+
+        //noinspection ResultOfMethodCallIgnored
         CONFIG_DIRECTORY.mkdirs();
         CONFIG_FILE = new File(CONFIG_DIRECTORY, CONFIG_FILENAME);
     }
@@ -62,6 +68,13 @@ public class FlairConfig {
         copyDefaultConfig();
 
         try {
+            INSTANCE.ALLOW_SPAM = false;
+            INSTANCE.VOLUME = 100;
+            INSTANCE.DEFAULT_SOUND = null;
+            INSTANCE.DEFAULT_CRAFTING_SOUND = null;
+            INSTANCE.DEFAULT_TYPING_SOUND = null;
+            INSTANCE.DEFAULT_DROP_SOUND = null;
+
             INSTANCE.ITEM_CONDITIONS.clear();
             INSTANCE.ITEM_SOUNDS.clear();
             INSTANCE.BLOCK_CONDITIONS.clear();

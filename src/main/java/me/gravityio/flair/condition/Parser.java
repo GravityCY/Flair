@@ -103,7 +103,7 @@ public class Parser {
                     args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new),
                     FlairConfig.INSTANCE.ITEM_SOUNDS::put
             );
-            case BLOCK -> parseSetGeneric(args, GameData.getItemRegistry()::containsKey,
+            case BLOCK -> parseSetGeneric(args, GameData.getBlockRegistry()::containsKey,
                     args1 -> parseSoundGenerator(args1, BlockSoundGenerator::new),
                     FlairConfig.INSTANCE.BLOCK_SOUNDS::put
             );
@@ -160,10 +160,16 @@ public class Parser {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a sound to play...");
         }
-        String sound = args.eat();
-        float volume = args.hasNext() ? parseFloat(args) : 1.0f;
-        float pitch = args.hasNext() ? parseFloat(args) : 1.0f;
-        FlairConfig.INSTANCE.DEFAULT_SOUND = new SoundData(sound, volume, pitch);
+
+        String type = args.eat();
+        switch (type) {
+            case "item" -> FlairConfig.INSTANCE.DEFAULT_SOUND = parseSoundGenerator(args, ItemSoundGenerator::new);
+            case "craft" -> FlairConfig.INSTANCE.DEFAULT_CRAFTING_SOUND = parseSoundGenerator(args, ItemSoundGenerator::new);
+            case "drop" -> FlairConfig.INSTANCE.DEFAULT_DROP_SOUND = parseSoundGenerator(args, ItemSoundGenerator::new);
+            case "typing" -> FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND = parseSoundGenerator(args, null);
+            case "inventory" -> FlairConfig.INSTANCE.DEFAULT_INV_SOUND = parseSoundGenerator(args, null);
+            default -> throw new ConfigParseException("Unknown default sound type: %s", type);
+        }
     }
 
     public static <T> SoundCondition<T> parseIf(ListPointer<String> args, ExpressionParser<T> expressionFactory, SoundGeneratorParser<T> soundGeneratorParser) throws ConfigParseException {
@@ -202,7 +208,7 @@ public class Parser {
         }
     }
 
-    public static <T> ISoundGenerator<T> parseSoundGenerator(ListPointer<String> args, SoundGeneratorFactory<T> blockSoundFactory) throws ConfigParseException {
+    public static <T> ISoundGenerator<T> parseSoundGenerator(ListPointer<String> args, SoundGeneratorFactory<T> soundFactory) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected either 'play' or 'playblocksound'...");
         }
@@ -232,7 +238,7 @@ public class Parser {
 
                 float volume = args.hasNext() ? parseFloat(args) : 1.0f;
                 float pitch = args.hasNext() ? parseFloat(args) : 1.0f;
-                yield blockSoundFactory.create(soundType, volume, pitch);
+                yield soundFactory.create(soundType, volume, pitch);
             }
         };
     }
