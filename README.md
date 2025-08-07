@@ -1,7 +1,24 @@
 # Flair
 A clientside mod that adds sound effects to stuff and things
 
+If nothing works, I'm not surprised...
+
+___
+
 **Minecraft Forge 1.7.10**
+
+**NEEDS GTNHLIB AND UNIMIXINS** 
+
+*(i think only those. Idk man I literally made this for GTNH so just use GTNH :)*
+
+___
+
+# The uhhhhh... "Showcase".... If you can even call it that...
+https://www.youtube.com/watch?v=tkQRdXkX-sc
+
+___
+
+Inspired by the Sounds mod :D
 
 ___
 
@@ -59,7 +76,7 @@ ___
 
 ## Thoughts
 
-While editing my GT: New Horizons videos. I often ended up manually adding sound effects during editing just to make the game feel more satisfying, so I 
+While editing my GT: New Horizons videos. I often ended up manually adding sound effects during editing just to make the game feel more satisfying, so I made this... 
 
 
 
