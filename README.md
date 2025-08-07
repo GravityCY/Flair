@@ -1,5 +1,5 @@
 # Flair
-A clientside mod that adds sound effects to stuff and things
+A clientside (at least it should be) mod that adds sound effects to stuff and things
 
 If nothing works, I'm not surprised...
 
@@ -76,7 +76,4 @@ ___
 
 ## Thoughts
 
-While editing my GT: New Horizons videos. I often ended up manually adding sound effects during editing just to make the game feel more satisfying, so I made this... 
-
-
-
+While editing my GT: New Horizons videos. I often ended up manually adding sound effects during editing just to make the game feel more satisfying, so I made this...
