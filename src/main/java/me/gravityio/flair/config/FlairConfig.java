@@ -9,6 +9,8 @@ import net.minecraft.item.ItemStack;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 
 @SideOnly(Side.CLIENT)
 public class FlairConfig {
@@ -37,26 +39,35 @@ public class FlairConfig {
     }
 
     public static void loadFirst() {
-        if (copyDefaultConfig()) load();
+        if (copyDefaultConfigs()) load();
     }
 
-    public static boolean copyDefaultConfig() {
-        if (Files.exists(CONFIG_FILE.toPath())) return false;
+    public static void copyResources(String resourceFolder, File toDirectory, String... resourceNames ) {
+        for (String resourceName : resourceNames) {
+            String resourcePath = resourceFolder + "/" + resourceName;
+            File output = new File(toDirectory, resourceName);
+            if (Files.exists(output.toPath())) continue;
 
-        try (InputStream in = Flair.class.getResourceAsStream("/flair.config")) {
-            if (in == null) {
-                throw new FileNotFoundException("Resource not found: flair.config");
+            try (InputStream in = Flair.class.getResourceAsStream(resourcePath)) {
+                if (in == null) {
+                    throw new FileNotFoundException("Resource not found: " + resourceName);
+                }
+                Flair.LOGGER.info("Copying {}", resourcePath);
+                Files.copy(in, output.toPath());
+            } catch (IOException e) {
+                Flair.LOGGER.error("Failed to copy {}", resourcePath, e);
             }
-            Flair.LOGGER.info("Copying flair config");
-            Files.copy(in, CONFIG_FILE.toPath());
-        } catch (IOException e) {
-            Flair.LOGGER.error("Failed to copy flair config", e);
         }
-        return true;
+    }
+
+    public static boolean copyDefaultConfigs() {
+        boolean exists = CONFIG_FILE.exists();
+        copyResources("/configs", CONFIG_DIRECTORY, "flair.config", "gtnh.config");
+        return !exists;
     }
 
     public static void load() {
-        copyDefaultConfig();
+        copyDefaultConfigs();
 
         try {
             INSTANCE.ALLOW_SPAM = false;

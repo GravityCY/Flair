@@ -12,6 +12,10 @@
 - modularize config parser?
 
 # Ideas
+- f5 screen
+- f1 screen
+- screenshot sound
+- planting sounds
 - furnace fire sound when turned on
 - redstone torch activation
 - NEI
