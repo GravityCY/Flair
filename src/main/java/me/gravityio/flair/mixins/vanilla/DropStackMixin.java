@@ -1,7 +1,7 @@
 package me.gravityio.flair.mixins.vanilla;
 
 import me.gravityio.flair.Flair;
-import me.gravityio.flair.FlairConfig;
+import me.gravityio.flair.config.FlairConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityClientPlayerMP;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +26,6 @@ public class DropStackMixin {
             )
     )
     private void onDropItems(CallbackInfo ci) {
-        if (FlairConfig.INSTANCE.DEFAULT_DROP_SOUND == null) return;
-        Flair.INSTANCE.playSound(FlairConfig.INSTANCE.DEFAULT_DROP_SOUND.getSound(this.thePlayer.inventory.getCurrentItem()));
+        Flair.INSTANCE.playSound(Flair.DROP_SOUNDS.getSound(this.thePlayer.inventory.getCurrentItem()));
     }
 }

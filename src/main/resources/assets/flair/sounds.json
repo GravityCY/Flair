@@ -22,5 +22,15 @@
     "sounds": [
       "gigachad"
     ]
+  },
+  "swing": {
+    "category": "master",
+    "sounds": [
+      "swing1",
+      "swing2",
+      "swing3",
+      "swing4",
+      "swing5"
+    ]
   }
 }

@@ -1,5 +1,6 @@
-package me.gravityio.flair;
+package me.gravityio.flair.config;
 
+import me.gravityio.flair.Flair;
 import net.minecraft.client.Minecraft;
 
 import java.io.File;

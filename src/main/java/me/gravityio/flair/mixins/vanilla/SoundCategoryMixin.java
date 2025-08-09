@@ -1,6 +1,7 @@
+
 package me.gravityio.flair.mixins.vanilla;
 
-import me.gravityio.flair.MetaSound;
+import me.gravityio.flair.data.MetaSound;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.SoundCategory;
 import net.minecraft.client.audio.SoundManager;
@@ -20,7 +21,7 @@ public class SoundCategoryMixin
             ordinal = 0
     )
     private SoundCategory modCategory(SoundCategory category, ISound sound) {
-        if (!(sound instanceof MetaSound)) return category;
-        return SoundCategory.MASTER;
+        if (!(sound instanceof MetaSound meta)) return category;
+        return meta.category;
     }
 }

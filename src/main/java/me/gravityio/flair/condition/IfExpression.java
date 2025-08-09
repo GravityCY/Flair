@@ -1,5 +1,7 @@
 package me.gravityio.flair.condition;
 
+import me.gravityio.flair.condition.variable.VariableType;
+
 public class IfExpression<T> implements Expression<T> {
     private final VariableType<T> variable;
     private final CompareMethod compareMethod;

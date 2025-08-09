@@ -1,6 +1,7 @@
-package me.gravityio.flair.condition;
+package me.gravityio.flair.condition.variable;
 
 import cpw.mods.fml.common.registry.GameData;
+import me.gravityio.flair.condition.CompareMethod;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.oredict.OreDictionary;

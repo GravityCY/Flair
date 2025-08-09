@@ -6,19 +6,18 @@ import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
-import cpw.mods.fml.common.registry.GameData;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
-import me.gravityio.flair.condition.ISoundGenerator;
-import me.gravityio.flair.condition.SoundCondition;
-import me.gravityio.flair.condition.SoundData;
-import me.gravityio.flair.event.AnvilTypingEvent;
-import me.gravityio.flair.event.ChatTypingEvent;
-import me.gravityio.flair.event.HotbarChangedEvent;
-import me.gravityio.flair.event.SignEvent;
+import me.gravityio.flair.config.FlairConfig;
+import me.gravityio.flair.config.WatchThread;
+import me.gravityio.flair.data.BlockInstance;
+import me.gravityio.flair.data.MetaSound;
+import me.gravityio.flair.data.SoundData;
+import me.gravityio.flair.event.*;
 import me.gravityio.flair.util.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.SoundCategory;
 import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiInventory;
@@ -37,7 +36,9 @@ import net.minecraftforge.event.world.WorldEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.joml.Math;
+import org.lwjgl.input.Keyboard;
 
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -58,6 +59,17 @@ public class Flair {
     public static final String MODID = "flair";
     public static final Logger LOGGER = LogManager.getLogger(MODID);
     public static Flair INSTANCE;
+
+    public static BlockSoundRegistry BLOCK_SOUNDS = SoundRegistries.INSTANCE.register("block_sounds",
+            new BlockSoundRegistry(8, 16));
+    public static ItemSoundRegistry ITEM_SOUNDS = SoundRegistries.INSTANCE.register("item_sounds",
+            new ItemSoundRegistry(8, 32));
+    public static ItemSoundRegistry CRAFT_SOUNDS = SoundRegistries.INSTANCE.register("craft_sounds",
+            new ItemSoundRegistry(4, 4));
+    public static ItemSoundRegistry DROP_SOUNDS = SoundRegistries.INSTANCE.register("drop_sounds",
+            new ItemSoundRegistry(4, 4));
+    public static ItemSoundRegistry SWING_SOUNDS = SoundRegistries.INSTANCE.register("swing_sounds",
+            new ItemSoundRegistry(4, 4));
 
     private boolean logScreenClasses = false;
     private boolean logSounds = false;
@@ -148,44 +160,8 @@ public class Flair {
         return items;
     }
 
-    public static SoundData getSound(BlockInstance blockInstance) {
-        if (blockInstance == null) return null;
-
-        String name = GameData.getBlockRegistry().getNameForObject(blockInstance.block);
-        ISoundGenerator<BlockInstance> sound = FlairConfig.INSTANCE.BLOCK_SOUNDS.get(name + "@" + blockInstance.meta);
-        if (sound == null) sound = FlairConfig.INSTANCE.BLOCK_SOUNDS.get(name);
-
-        if (sound == null) {
-            for (SoundCondition<BlockInstance> condition : FlairConfig.INSTANCE.BLOCK_CONDITIONS) {
-                if (!condition.shouldPlay(blockInstance)) continue;
-                return condition.getSound(blockInstance);
-            }
-            return null;
-        }
-        return sound.getSound(blockInstance);
-    }
-
-    public static SoundData getSound(ItemStack stack) {
-        if (stack == null) return null;
-
-        ISoundGenerator<ItemStack> sound;
-        String name = GameData.getItemRegistry().getNameForObject(stack.getItem());
-        if (stack.getHasSubtypes()) {
-            sound = FlairConfig.INSTANCE.ITEM_SOUNDS.get(name + "@" + stack.getItemDamage());
-            if (sound == null) sound = FlairConfig.INSTANCE.ITEM_SOUNDS.get(name);
-        } else {
-            sound = FlairConfig.INSTANCE.ITEM_SOUNDS.get(name);
-        }
-
-        if (sound == null) {
-            for (SoundCondition<ItemStack> condition : FlairConfig.INSTANCE.ITEM_CONDITIONS) {
-                if (!condition.shouldPlay(stack)) continue;
-                return condition.getSound(stack);
-            }
-            if (FlairConfig.INSTANCE.DEFAULT_SOUND == null) return null;
-            return FlairConfig.INSTANCE.DEFAULT_SOUND.getSound(stack);
-        }
-        return sound.getSound(stack);
+    public static boolean isClientThread() {
+        return Minecraft.getMinecraft().func_152345_ab();
     }
 
     public void logScreens() {
@@ -221,24 +197,9 @@ public class Flair {
         }
     }
 
-    public void playSound(ItemStack stack) {
-        if (stack == null) return;
-        this.playSound(getSound(stack));
-    }
-
-    public void playSound(BlockInstance block) {
-        if (block == null) return;
-        this.playSound(getSound(block));
-    }
-
     public void playSound(SoundData sound) {
         if (sound == null) return;
         playSound(sound.sound, sound.volume, sound.pitch);
-    }
-
-    public void playSound(SoundData sound, int delay) {
-        if (sound == null) return;
-        playSound(sound.sound, sound.volume, sound.pitch, delay);
     }
 
     public void playSound(SoundData sound, Float volume, Float pitch) {
@@ -246,17 +207,25 @@ public class Flair {
         this.playSound(sound.sound, volume == null ? sound.volume : volume, pitch == null ? sound.pitch : pitch);
     }
 
-    public void playSound(SoundData sound, Float volume, Float pitch, int delay) {
+    public void playSoundForced(SoundData sound) {
         if (sound == null) return;
-        this.playSound(sound.sound, volume == null ? sound.volume : volume, pitch == null ? sound.pitch : pitch, delay);
+        this.playSoundForced(sound, null, null);
     }
 
-    private void stopSound(MetaSound sound) {
+    public void playSoundForced(SoundData sound, Float volume, Float pitch) {
+        if (sound == null) return;
+        this.playSoundForced(sound.sound, volume == null ? sound.volume : volume, pitch == null ? sound.pitch : pitch);
+    }
+
+    public void playSoundForced(String sound, float volume, float pitch) {
+        if (sound == null) return;
         Minecraft mc = Minecraft.getMinecraft();
-        String name = sound.getPositionedSoundLocation().toString();
-        String uuid = this.playingSounds.get(name);
-        if (uuid == null) return;
-        mc.getSoundHandler().sndManager.sndSystem.stop(uuid);
+        if (mc.thePlayer == null) return;
+        MetaSound soundInstance = new MetaSound(
+                sound, volume * FlairConfig.INSTANCE.VOLUME / 100f, pitch,
+                mc.thePlayer
+        );
+        mc.getSoundHandler().playSound(soundInstance);
     }
 
     public void playSound(String sound, float volume, float pitch) {
@@ -289,7 +258,18 @@ public class Flair {
         this.lastSoundTick = mc.thePlayer.ticksExisted;
     }
 
-    public void playSound(String sound, float volume, float pitch, int delay) {
+    public void playSoundDelayed(SoundData sound, int delay) {
+        if (sound == null) return;
+        playSoundDelayed(sound.sound, sound.volume, sound.pitch, delay);
+    }
+
+    public void playSoundDelayed(SoundData sound, Float volume, Float pitch, int delay) {
+        if (sound == null) return;
+        this.playSoundDelayed(sound.sound, volume == null ? sound.volume : volume, pitch == null ? sound.pitch : pitch,
+                delay);
+    }
+
+    public void playSoundDelayed(String sound, float volume, float pitch, int delay) {
         if (sound == null) return;
         Minecraft mc = Minecraft.getMinecraft();
         if (mc.thePlayer == null) return;
@@ -300,8 +280,43 @@ public class Flair {
         this.lastSoundTick = mc.thePlayer.ticksExisted;
     }
 
-    public static boolean isClientThread() {
-        return Minecraft.getMinecraft().func_152345_ab();
+    public void stopSound(MetaSound sound) {
+        Minecraft mc = Minecraft.getMinecraft();
+        String name = sound.getPositionedSoundLocation().toString();
+        String uuid = this.playingSounds.get(name);
+        if (uuid == null) return;
+        mc.getSoundHandler().sndManager.sndSystem.stop(uuid);
+    }
+
+    public void playSoundAt(SoundData sound, Vec3 pos, SoundCategory category) {
+        if (sound == null) return;
+        this.playSoundAt(sound.sound, sound.volume, sound.pitch, pos, category);
+    }
+
+    public void playSoundAt(@Nullable String sound, float volume, float pitch, Vec3 pos, SoundCategory category) {
+        if (sound == null) return;
+        Minecraft mc = Minecraft.getMinecraft();
+        if (mc.thePlayer == null) return;
+
+        MetaSound soundInstance = new MetaSound(
+                sound, volume, pitch,
+                pos, category
+        );
+
+        mc.getSoundHandler().playSound(soundInstance);
+    }
+
+    public void playTyping(int currentLength, int maxLength, boolean end) {
+        if (FlairConfig.INSTANCE.TYPING_SOUND == null) return;
+
+        SoundData sound = FlairConfig.INSTANCE.TYPING_SOUND.getSound(null);
+        float newPitch;
+        if (end) {
+            newPitch = sound.pitch / 2f;
+        } else {
+            newPitch = Math.lerp(sound.pitch, 2f, (float) currentLength / maxLength);
+        }
+        this.playSoundForced(sound, null, newPitch);
     }
 
     @Mod.EventHandler
@@ -322,6 +337,14 @@ public class Flair {
     }
 
     @SubscribeEvent
+    public void onSwingItemEvent(SwingItemEvent event) {
+        if (!Flair.isClientThread()) return;
+        if (event.type != SwingItemEvent.SwingType.ANIMATION_START) return;
+
+        this.playSoundForced(SWING_SOUNDS.getSound(event.stack));
+    }
+
+    @SubscribeEvent
     public void onWorldUnload(WorldEvent.Unload event) {
         if (!Flair.isClientThread()) return;
         if (this.logSounds) this.logSounds();
@@ -338,9 +361,8 @@ public class Flair {
     @SubscribeEvent
     public void onCraft(PlayerEvent.ItemCraftedEvent event) {
         if (!Flair.isClientThread()) return;
-        if (FlairConfig.INSTANCE.DEFAULT_CRAFTING_SOUND == null) return;
 
-        playSound(FlairConfig.INSTANCE.DEFAULT_CRAFTING_SOUND.getSound(event.crafting));
+        playSound(CRAFT_SOUNDS.getSound(event.crafting));
     }
 
     @SubscribeEvent
@@ -353,62 +375,67 @@ public class Flair {
         TileEntity te = event.world.getTileEntity(event.x, event.y, event.z);
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 
-        playSound(new BlockInstance(block, event.world, te, meta, event.x, event.y, event.z));
+        playSound(BLOCK_SOUNDS.getSound(new BlockInstance(block, event.world, te, meta, event.x, event.y, event.z)));
     }
 
-    // ONLY WORKS FOR DROPPING FROM THE UI ON THE CLIENT
-    // TO DROP WITH KEYBIND @DropStackMixin
     @SubscribeEvent
     public void onItemTossedEvent(ItemTossEvent event) {
-        if (FlairConfig.INSTANCE.DEFAULT_DROP_SOUND == null) return;
         if (!Flair.isClientThread()) return;
 
-        playSound(FlairConfig.INSTANCE.DEFAULT_DROP_SOUND.getSound(event.entityItem.getEntityItem()));
+        playSound(DROP_SOUNDS.getSound(event.entityItem.getEntityItem()));
+    }
+
+    @SubscribeEvent
+    public void onNEIRecipeClick(NEIOpenRecipeEvent event) {
+        if (!Flair.isClientThread()) return;
+        playSound(ITEM_SOUNDS.getSound(event.stack));
+    }
+
+    @SubscribeEvent
+    public void onNEIRecipeTyping(NEIRecipeTypingEvent event) {
+        int l1 = event.newString.length();
+        int l2 = 256;
+        this.playTyping(l1, l2, l1 == l2);
+    }
+
+    @SubscribeEvent
+    public void onNEISearchTyping(NEISearchTypingEvent event) {
+        int l1 = event.newString.length();
+        int l2 = 256;
+        this.playTyping(l1, l2, l1 == l2);
     }
 
     //TODO: MODULARIZE? WE CAN DETECT KEY INPUTS AT THE ROOT BUT HOW TO KNOW IF IT'S BEING CAPTURED IN AN INPUTFIELD?
     @SubscribeEvent
     public void onSignChange(SignEvent event) {
-        if (FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND == null) return;
         if (event.character == 0) return;
 
         int lineIndex = event.line;
         int lineLength = event.lines[lineIndex].length();
+        int total = lineIndex * 15 + lineLength;
 
-        float p = (lineIndex / 4f + lineLength / 15f * 0.25f) / 2f;
-        SoundData sound = FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND.getSound(null);
-        float newPitch = Math.lerp(sound.pitch, 2f, p);
-        if (newPitch >= 2) newPitch = sound.pitch / 2f;
-        playSound(sound, null, newPitch);
+        this.playTyping(total, 60, total % 15 == 0);
     }
 
     @SubscribeEvent
     public void onAnvilTyping(AnvilTypingEvent event) {
-        if (FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND == null) return;
-        if (event.typedChar == 0) return;
+        if (!ChatAllowedCharacters.isAllowedCharacter(event.typedChar) && event.keyCode != Keyboard.KEY_BACK) return;
 
-        int lineLength = event.textField.getText().length();
-        float maxLength = event.textField.getMaxStringLength();
+        int l1 = event.inputField.getText().length();
+        int l2 = event.inputField.getMaxStringLength();
 
-        SoundData sound = FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND.getSound(null);
-        float newPitch = Math.lerp(sound.pitch, 2f, (float) lineLength / maxLength);
-        if (newPitch >= 2) newPitch = sound.pitch / 2f;
-        playSound(sound, null, newPitch);
+        this.playTyping(l1, l2, l1 == l2);
     }
 
     //TODO: MODULARIZE? WE CAN DETECT KEY INPUTS AT THE ROOT BUT HOW TO KNOW IF IT'S BEING CAPTURED IN AN INPUTFIELD?
     @SubscribeEvent
     public void onChatTyping(ChatTypingEvent event) {
-        if (FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND == null) return;
-        if (event.typedChar == 0) return;
+        if (event.keyCode == Keyboard.KEY_ESCAPE || event.keyCode == Keyboard.KEY_RETURN) return;
 
-        int lineLength = event.inputField.getText().length();
-        int maxLength = event.inputField.getMaxStringLength();
+        int l1 = event.inputField.getText().length();
+        int l2 = event.inputField.getMaxStringLength();
 
-        SoundData sound = FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND.getSound(null);
-        float newPitch = Math.lerp(sound.pitch, 2f, (float) lineLength / maxLength);
-        if (newPitch >= 2) newPitch = sound.pitch / 2f;
-        playSound(sound, null, newPitch);
+        this.playTyping(l1, l2, l1 == l2);
     }
 
     // TODO: MODULARIZE? HOW TO ENCODE TO A NICE USER DISPLAYABLE STRING? JUST DONT? AND MAKE A COMMAND TO LOG SCREEN CLASS NAMES?
@@ -419,16 +446,16 @@ public class Flair {
             FlairLog.SCREENS.printf("Gui '%s' opened%n", String.join(" -> ", hierarchy));
         }
 
-        if (FlairConfig.INSTANCE.DEFAULT_INV_SOUND == null) return;
-        GuiScreen currentScreen = Minecraft.getMinecraft().currentScreen;
+        if (FlairConfig.INSTANCE.INVENTORY_SOUND == null) return;
+        GuiScreen prevScreen = Minecraft.getMinecraft().currentScreen;
         GuiScreen newScreen = event.gui;
-        boolean anyInventory = currentScreen instanceof GuiInventory || newScreen instanceof GuiInventory;
         boolean close = newScreen == null;
+        boolean anyInventory = newScreen instanceof GuiInventory || prevScreen instanceof GuiInventory;
         if (!anyInventory) return;
 
-        SoundData sound = FlairConfig.INSTANCE.DEFAULT_INV_SOUND.getSound(null);
-        if (close) {
-            playSound(sound, null, sound.pitch * 0.9f, 2);
+        SoundData sound = FlairConfig.INSTANCE.INVENTORY_SOUND.getSound(null);
+        if (close && prevScreen instanceof GuiInventory) {
+            playSoundDelayed(sound, null, sound.pitch * 0.9f, 2);
         } else {
             playSound(sound, null, sound.pitch);
         }
@@ -436,7 +463,15 @@ public class Flair {
 
     @SubscribeEvent
     public void onHotbarChange(HotbarChangedEvent event) {
-        this.playSound(event.player.inventory.getCurrentItem());
+        float p = event.newSlot / 9f;
+
+        SoundData sound;
+        if (FlairConfig.INSTANCE.HOTBAR_SOUND == null) {
+            sound = ITEM_SOUNDS.getSound(event.player.inventory.getCurrentItem());
+        } else {
+            sound = FlairConfig.INSTANCE.HOTBAR_SOUND.getSound(event.player.inventory.getCurrentItem());
+        }
+        this.playSoundForced(sound.copy(null, null, Math.lerp(sound.pitch, 2f, p)));
     }
 
 }

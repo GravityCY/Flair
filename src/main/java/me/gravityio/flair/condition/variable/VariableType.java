@@ -1,4 +1,6 @@
-package me.gravityio.flair.condition;
+package me.gravityio.flair.condition.variable;
+
+import me.gravityio.flair.condition.CompareMethod;
 
 public interface VariableType<T> {
     String getSyntaxString();

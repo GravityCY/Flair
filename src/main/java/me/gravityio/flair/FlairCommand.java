@@ -2,6 +2,7 @@ package me.gravityio.flair;
 
 import com.google.common.collect.Lists;
 import cpw.mods.fml.common.registry.GameData;
+import me.gravityio.flair.config.FlairConfig;
 import me.gravityio.flair.util.ArrayPointer;
 import me.gravityio.flair.util.StringUtils;
 import net.minecraft.block.Block;
@@ -94,18 +95,23 @@ public class FlairCommand extends CommandBase {
             }
             case "play" -> {
                 if (args.isEnd()) {
-                    Flair.sendMessage("Usage: /flair play <name> <name> ...");
+                    Flair.sendMessage("Usage: /flair play <name> <volume> <pitch>");
                     return;
                 }
-                StringBuilder arg = new StringBuilder();
-                while (args.hasNext()) {
-                    arg.append(args.eat());
+
+                String item = args.eat();
+                float volume = 1;
+                float pitch = 1;
+                if (args.hasNext()) {
+                    volume = Float.parseFloat(args.eat());
+                    if (args.hasNext()) {
+                        pitch = Float.parseFloat(args.eat());
+                    }
                 }
-                String item = arg.toString();
                 List<String> results = findSounds(item, 25);
                 if (results.isEmpty()) return;
                 String sound = results.get(results.size() - 1);
-                Minecraft.getMinecraft().thePlayer.playSound(sound, 1, 1);
+                Minecraft.getMinecraft().thePlayer.playSound(sound, volume, pitch);
                 Flair.sendMessage("Playing '%s'...", EnumChatFormatting.RED, sound);
             }
             case "hand" -> {

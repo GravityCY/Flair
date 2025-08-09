@@ -23,10 +23,10 @@ public class SignEventMixin {
     @Inject(
             method = "keyTyped",
             at = @At(
-                    "HEAD"
+                    "TAIL"
             )
     )
     private void flair$onKeyTyped(char typedChar, int keyCode, CallbackInfo ci) {
-        MinecraftForge.EVENT_BUS.post(new SignEvent(this.tileSign.signText, typedChar, this.editLine));
+        MinecraftForge.EVENT_BUS.post(new SignEvent(this.tileSign.signText, typedChar, keyCode, this.editLine));
     }
 }

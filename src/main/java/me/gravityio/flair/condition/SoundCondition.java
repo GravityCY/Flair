@@ -1,5 +1,8 @@
 package me.gravityio.flair.condition;
 
+import me.gravityio.flair.condition.sound.ISoundGenerator;
+import me.gravityio.flair.data.SoundData;
+
 public class SoundCondition<T> {
     private final Expression<T> expression;
     private final ISoundGenerator<T> sound;

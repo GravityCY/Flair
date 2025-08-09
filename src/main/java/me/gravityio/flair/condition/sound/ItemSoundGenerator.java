@@ -1,5 +1,7 @@
-package me.gravityio.flair.condition;
+package me.gravityio.flair.condition.sound;
 
+import me.gravityio.flair.condition.BlockSoundType;
+import me.gravityio.flair.data.SoundData;
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;

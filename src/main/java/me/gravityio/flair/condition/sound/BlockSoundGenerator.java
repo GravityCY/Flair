@@ -1,9 +1,8 @@
-package me.gravityio.flair.condition;
+package me.gravityio.flair.condition.sound;
 
-import me.gravityio.flair.BlockInstance;
-import net.minecraft.block.Block;
-import net.minecraft.item.ItemBlock;
-import net.minecraft.item.ItemStack;
+import me.gravityio.flair.condition.BlockSoundType;
+import me.gravityio.flair.data.SoundData;
+import me.gravityio.flair.data.BlockInstance;
 
 public class BlockSoundGenerator implements ISoundGenerator<BlockInstance> {
     private final BlockSoundType soundToPlay;

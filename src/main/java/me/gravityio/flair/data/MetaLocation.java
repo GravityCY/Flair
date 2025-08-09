@@ -1,4 +1,4 @@
-package me.gravityio.flair;
+package me.gravityio.flair.data;
 
 import cpw.mods.fml.common.registry.GameData;
 import net.minecraft.item.ItemStack;

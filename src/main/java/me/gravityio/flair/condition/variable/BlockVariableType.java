@@ -1,7 +1,8 @@
-package me.gravityio.flair.condition;
+package me.gravityio.flair.condition.variable;
 
 import cpw.mods.fml.common.registry.GameData;
-import me.gravityio.flair.BlockInstance;
+import me.gravityio.flair.condition.CompareMethod;
+import me.gravityio.flair.data.BlockInstance;
 import me.gravityio.flair.Flair;
 
 import java.util.function.Function;

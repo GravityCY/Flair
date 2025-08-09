@@ -1,10 +1,14 @@
-package me.gravityio.flair.condition;
+package me.gravityio.flair.config;
 
 import cpw.mods.fml.common.registry.GameData;
-import me.gravityio.flair.BlockInstance;
+import me.gravityio.flair.condition.*;
+import me.gravityio.flair.condition.sound.*;
+import me.gravityio.flair.condition.variable.BlockVariableType;
+import me.gravityio.flair.condition.variable.ItemVariableType;
+import me.gravityio.flair.condition.variable.VariableType;
+import me.gravityio.flair.data.BlockInstance;
 import me.gravityio.flair.Flair;
-import me.gravityio.flair.FlairConfig;
-import me.gravityio.flair.MetaLocation;
+import me.gravityio.flair.data.MetaLocation;
 import me.gravityio.flair.util.ListPointer;
 import me.gravityio.flair.util.StringUtils;
 import net.minecraft.item.ItemStack;
@@ -15,7 +19,8 @@ import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class Parser {
+// TODO: MODULARIZE THIS?
+public class ConfigParser {
     public static class ConfigParseException extends Exception {
         public ConfigParseException(String message, Object... args) {
             super(String.format(message, args));
@@ -51,15 +56,15 @@ public class Parser {
                     }
                     case "default" -> {
                         info("Adding default condition...", i);
-                        parseDefault(args);
+                        parseDefaultGeneric(args);
                     }
                     case "set" -> {
                         info("Adding set condition...", i);
-                        parseSetGeneric(args);
+                        parseSet(args);
                     }
                     case "if" -> {
                         info("Adding if condition...", i);
-                        parseIfGeneric(args);
+                        parseIf(args);
                     }
                     case "allowspam" -> FlairConfig.INSTANCE.ALLOW_SPAM = true;
                     default -> error(String.format("Unknown command: %s", command), i);
@@ -71,41 +76,87 @@ public class Parser {
         }
     }
 
-    private static void parseIfGeneric(ListPointer<String> args) throws ConfigParseException {
+    private static void parseIf(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected either 'item' or 'block'...");
         }
         String type = args.eat();
-        IfType ifType = IfType.fromString(type);
+        SoundType ifType = SoundType.fromString(type);
         if (ifType == null) {
             throw new ConfigParseException(String.format("Unknown type: %s... expected 'item' or 'block", type));
         }
 
         switch (ifType) {
-            case ITEM -> FlairConfig.INSTANCE.ITEM_CONDITIONS.add(parseItemIf(args));
-            case BLOCK -> FlairConfig.INSTANCE.BLOCK_CONDITIONS.add(parseBlockIf(args));
+            case ITEM -> Flair.ITEM_SOUNDS.condition(parseItemIf(args));
+            case BLOCK -> Flair.BLOCK_SOUNDS.condition(parseBlockIf(args));
+            case CRAFT -> Flair.CRAFT_SOUNDS.condition(parseItemIf(args));
+            case DROP -> Flair.DROP_SOUNDS.condition(parseItemIf(args));
+            case SWING -> Flair.SWING_SOUNDS.condition(parseItemIf(args));
         }
     }
 
-    public static void parseSetGeneric(ListPointer<String> args) throws ConfigParseException {
+    public static <T> SoundCondition<T> parseIfGeneric(ListPointer<String> args, ExpressionParser<T> expressionFactory, SoundGeneratorParser<T> soundGeneratorParser) throws ConfigParseException {
+        if (args.peek().equals("if")) args.skip();
+        Expression<T> main = expressionFactory.parse(args);
+        while (true) {
+            if (args.isEnd()) {
+                throw new ConfigParseException("Expected and, or, play, etc...");
+            }
+            String arg = args.peek().toLowerCase();
+            if (arg.equals("and") || arg.equals("or")) {
+                args.skip();
+                Expression<T> expression = expressionFactory.parse(args);
+                main = new BinaryExpression<>(main, expression, BinaryOperator.fromString(arg));
+            } else break;
+        }
+
+        return new SoundCondition<>(main, soundGeneratorParser.parse(args));
+    }
+
+    public static SoundCondition<ItemStack> parseItemIf(ListPointer<String> args) throws ConfigParseException {
+        return parseIfGeneric(args, args1 -> parseIfExpression(args1, ItemVariableType::fromString),
+                args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new));
+    }
+
+    public static SoundCondition<BlockInstance> parseBlockIf(ListPointer<String> args) throws ConfigParseException {
+        return parseIfGeneric(args, args1 -> parseIfExpression(args1, BlockVariableType::fromString),
+                args1 -> parseSoundGenerator(args1, BlockSoundGenerator::new));
+    }
+
+    public static void parseSet(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected either 'item' or 'block'...");
         }
         String type = args.eat();
-        IfType ifType = IfType.fromString(type);
-        if (ifType == null) {
+        SoundType soundType = SoundType.fromString(type);
+        if (soundType == null) {
             throw new ConfigParseException(String.format("Unknown type: %s... expected 'item' or 'block'", type));
         }
 
-        switch (ifType) {
+        switch (soundType) {
             case ITEM -> parseSetGeneric(
                     args, GameData.getItemRegistry()::containsKey,
                     args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new),
-                    FlairConfig.INSTANCE.ITEM_SOUNDS::put
+                    Flair.ITEM_SOUNDS::mapping
             );
             case BLOCK -> parseSetGeneric(args, GameData.getBlockRegistry()::containsKey,
                     args1 -> parseSoundGenerator(args1, BlockSoundGenerator::new),
-                    FlairConfig.INSTANCE.BLOCK_SOUNDS::put
+                    Flair.BLOCK_SOUNDS::mapping
+            );
+            case CRAFT -> parseSetGeneric(
+                    args, GameData.getItemRegistry()::containsKey,
+                    args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new),
+                    Flair.CRAFT_SOUNDS::mapping
+            );
+            case DROP -> parseSetGeneric(
+                    args, GameData.getItemRegistry()::containsKey,
+                    args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new),
+                    Flair.DROP_SOUNDS::mapping
+            );
+            case SWING -> parseSetGeneric(
+                    args, GameData.getItemRegistry()::containsKey,
+                    args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new),
+                    Flair.SWING_SOUNDS::mapping
             );
         }
     }
@@ -156,48 +207,22 @@ public class Parser {
         FlairConfig.INSTANCE.VOLUME = volume;
     }
 
-    public static void parseDefault(ListPointer<String> args) throws ConfigParseException {
+    public static void parseDefaultGeneric(ListPointer<String> args) throws ConfigParseException {
         if (args.isEnd()) {
             throw new ConfigParseException("Expected a sound to play...");
         }
 
         String type = args.eat();
         switch (type) {
-            case "item" -> FlairConfig.INSTANCE.DEFAULT_SOUND = parseSoundGenerator(args, ItemSoundGenerator::new);
-            case "craft" -> FlairConfig.INSTANCE.DEFAULT_CRAFTING_SOUND = parseSoundGenerator(args, ItemSoundGenerator::new);
-            case "drop" -> FlairConfig.INSTANCE.DEFAULT_DROP_SOUND = parseSoundGenerator(args, ItemSoundGenerator::new);
-            case "typing" -> FlairConfig.INSTANCE.DEFAULT_TYPING_SOUND = parseSoundGenerator(args, null);
-            case "inventory" -> FlairConfig.INSTANCE.DEFAULT_INV_SOUND = parseSoundGenerator(args, null);
+            case "item" -> Flair.ITEM_SOUNDS.defaultSound(parseSoundGenerator(args, ItemSoundGenerator::new));
+            case "craft" -> Flair.CRAFT_SOUNDS.defaultSound(parseSoundGenerator(args, ItemSoundGenerator::new));
+            case "drop" -> Flair.DROP_SOUNDS.defaultSound(parseSoundGenerator(args, ItemSoundGenerator::new));
+            case "swing" -> Flair.SWING_SOUNDS.defaultSound(parseSoundGenerator(args, ItemSoundGenerator::new));
+            case "hotbar" -> FlairConfig.INSTANCE.HOTBAR_SOUND = parseSoundGenerator(args, ItemSoundGenerator::new);
+            case "typing" -> FlairConfig.INSTANCE.TYPING_SOUND = parseSoundGenerator(args, null);
+            case "inventory" -> FlairConfig.INSTANCE.INVENTORY_SOUND = parseSoundGenerator(args, null);
             default -> throw new ConfigParseException("Unknown default sound type: %s", type);
         }
-    }
-
-    public static <T> SoundCondition<T> parseIf(ListPointer<String> args, ExpressionParser<T> expressionFactory, SoundGeneratorParser<T> soundGeneratorParser) throws ConfigParseException {
-        if (args.peek().equals("if")) args.skip();
-        Expression<T> main = expressionFactory.parse(args);
-        while (true) {
-            if (args.isEnd()) {
-                throw new ConfigParseException("Expected and, or, play, etc...");
-            }
-            String arg = args.peek().toLowerCase();
-            if (arg.equals("and") || arg.equals("or")) {
-                args.skip();
-                Expression<T> expression = expressionFactory.parse(args);
-                main = new BinaryExpression<>(main, expression, BinaryOperator.fromString(arg));
-            } else break;
-        }
-
-        return new SoundCondition<>(main, soundGeneratorParser.parse(args));
-    }
-
-    public static SoundCondition<ItemStack> parseItemIf(ListPointer<String> args) throws ConfigParseException {
-        return parseIf(args, args1 -> parseIfExpression(args1, ItemVariableType::fromString),
-                args1 -> parseSoundGenerator(args1, ItemSoundGenerator::new));
-    }
-
-    public static SoundCondition<BlockInstance> parseBlockIf(ListPointer<String> args) throws ConfigParseException {
-        return parseIf(args, args1 -> parseIfExpression(args1, BlockVariableType::fromString),
-                args1 -> parseSoundGenerator(args1, BlockSoundGenerator::new));
     }
 
     public static float parseFloat(ListPointer<String> args) throws ConfigParseException {

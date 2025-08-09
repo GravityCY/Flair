@@ -1,4 +1,6 @@
-package me.gravityio.flair.condition;
+package me.gravityio.flair.condition.sound;
+
+import me.gravityio.flair.data.SoundData;
 
 public class NormalSoundGenerator<T> implements ISoundGenerator<T> {
     private final String soundToPlay;

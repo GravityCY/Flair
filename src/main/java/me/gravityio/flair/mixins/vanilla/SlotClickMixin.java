@@ -58,6 +58,6 @@ public class SlotClickMixin {
         }
 
         if (stack == null) return;
-        Flair.INSTANCE.playSound(stack);
+        Flair.INSTANCE.playSound(Flair.ITEM_SOUNDS.getSound(stack));
     }
 }
