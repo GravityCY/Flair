@@ -52,6 +52,7 @@ public enum ItemVariableType implements VariableType<ItemStack> {
 
     @Override
     public Object getValue(ItemStack stack) {
+        if (stack == null) return null;
         return this.valueGetter.apply(stack);
     }
 

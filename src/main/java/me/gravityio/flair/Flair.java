@@ -471,6 +471,7 @@ public class Flair {
         } else {
             sound = FlairConfig.INSTANCE.HOTBAR_SOUND.getSound(event.player.inventory.getCurrentItem());
         }
+        if (sound == null) return;
         this.playSoundForced(sound.copy(null, null, Math.lerp(sound.pitch, 2f, p)));
     }
 
