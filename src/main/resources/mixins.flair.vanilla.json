@@ -4,5 +4,10 @@
   "package": "me.gravityio.flair.mixins.vanilla",
   "refmap": "mixins.flair.refmap.json",
   "target": "@env(DEFAULT)",
-  "compatibilityLevel": "JAVA_8"
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+  ],
+  "mixins": [
+
+  ]
 }

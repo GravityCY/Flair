@@ -57,7 +57,8 @@ public class FlairEarlyMixins implements IFMLLoadingPlugin, IEarlyMixinLoader {
                     "SignEventMixin",
                     "ChatTypingMixin",
                     "AnvilTypingMixin",
-                    "SwingItemMixin"
+                    "SwingItemMixin$SwingStartMixin",
+                    "SwingItemMixin$SwingAnimMixin"
             );
         }
         return Collections.emptyList();

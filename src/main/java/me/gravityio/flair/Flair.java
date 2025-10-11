@@ -149,7 +149,7 @@ public class Flair {
         try {
             @SuppressWarnings("deprecation")
             ItemStack pick = mouseoverBlock.getPickBlock(target, world, x, y, z);
-            if (pick != null) items.add(pick);
+            if (pick.getItem() != null) items.add(pick);
         } catch (Exception ignored) {
         }
 
@@ -339,7 +339,7 @@ public class Flair {
     @SubscribeEvent
     public void onSwingItemEvent(SwingItemEvent event) {
         if (!Flair.isClientThread()) return;
-        if (event.type != SwingItemEvent.SwingType.ANIMATION_START) return;
+        if (event.type != SwingItemEvent.SwingType.START) return;
 
         this.playSoundForced(SWING_SOUNDS.getSound(event.stack));
     }

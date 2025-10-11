@@ -13,15 +13,15 @@ public class SwingItemEvent extends Event {
         this.type = type;
     }
 
-    public static SwingItemEvent immediate(ItemStack stack) {
-        return new SwingItemEvent(stack, SwingType.IMMEDIATE);
+    public static SwingItemEvent start(ItemStack stack) {
+        return new SwingItemEvent(stack, SwingType.START);
     }
 
     public static SwingItemEvent animation(ItemStack stack) {
-        return new SwingItemEvent(stack, SwingType.ANIMATION_START);
+        return new SwingItemEvent(stack, SwingType.ANIMATION);
     }
 
     public enum SwingType {
-        IMMEDIATE, ANIMATION_START
+        START, ANIMATION
     }
 }
