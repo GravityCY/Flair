@@ -2,7 +2,7 @@ package me.gravityio.flair.mixins.compat;
 
 import codechicken.nei.SearchField;
 import codechicken.nei.TextField;
-import me.gravityio.flair.event.NEISearchTypingEvent;
+import me.gravityio.flair.event.nei.NEISearchTypingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

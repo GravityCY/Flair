@@ -1,7 +1,7 @@
 package me.gravityio.flair.mixins.compat;
 
 import codechicken.nei.TextField;
-import me.gravityio.flair.event.NEIRecipeTypingEvent;
+import me.gravityio.flair.event.nei.NEIRecipeTypingEvent;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

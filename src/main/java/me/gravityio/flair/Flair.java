@@ -14,6 +14,8 @@ import me.gravityio.flair.data.BlockInstance;
 import me.gravityio.flair.data.MetaSound;
 import me.gravityio.flair.data.SoundData;
 import me.gravityio.flair.event.*;
+import me.gravityio.flair.event.nei.*;
+import me.gravityio.flair.util.MathHelper;
 import me.gravityio.flair.util.Utils;
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
@@ -427,6 +429,52 @@ public class Flair {
         int l1 = event.newString.length();
         int l2 = 256;
         this.playTyping(l1, l2, l1 == l2);
+    }
+
+    @SubscribeEvent
+    public void onNEIAddBookmark(NEINewBookmarkEvent event) {
+        if (FlairConfig.INSTANCE.BOOKMARK_SOUND == null) return;
+
+        SoundData data = FlairConfig.INSTANCE.BOOKMARK_SOUND.getSound(event.bookmarkItem.itemStack);
+        if (data == null) return;
+
+        int current = event.bookmarkGrid.size() + 1;
+        int wrapped = current % event.bookmarkGrid.getPerPage();
+        float p = (float) wrapped / event.bookmarkGrid.getPerPage();
+
+        float start = data.pitch;
+        float end = Math.min(data.pitch * 1.5f, 1.5f);
+        float pitch = MathHelper.lerp(start, end, p);
+
+        playSound(data, null, pitch);
+    }
+
+    @SubscribeEvent
+    public void onNEIRemoveBookmark(NEIRemoveBookmarkEvent event) {
+        if (FlairConfig.INSTANCE.BOOKMARK_SOUND == null) return;
+
+        SoundData data = FlairConfig.INSTANCE.BOOKMARK_SOUND.getSound(null);
+        if (data == null) return;
+
+        playSound(data, null, Math.max(data.pitch * 0.5f, 0.5f));
+    }
+
+    @SubscribeEvent
+    public void onNEIScrollBookmark(NEIScrollBookmarkEvent event) {
+        if (FlairConfig.INSTANCE.TYPING_SOUND == null) return;
+
+        SoundData data = FlairConfig.INSTANCE.TYPING_SOUND.getSound(null);
+        if (data == null) return;
+
+        long maxStackSize = (long) event.bookmarkItem.itemStack.getMaxStackSize() * Math.abs(event.shift);
+        if (maxStackSize == 1 || maxStackSize == 0) maxStackSize = 64;
+
+        long newSize = event.bookmarkItem.amount + event.shift;
+        long wrapped = newSize % maxStackSize;
+        float p = (float) wrapped / maxStackSize;
+
+        float pitch = MathHelper.lerp(data.pitch, java.lang.Math.min(2, data.pitch * 2), p);
+        playSoundForced(data, null, pitch);
     }
 
     //TODO: MODULARIZE? WE CAN DETECT KEY INPUTS AT THE ROOT BUT HOW TO KNOW IF IT'S BEING CAPTURED IN AN INPUTFIELD?

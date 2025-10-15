@@ -23,6 +23,7 @@ public class FlairLateMixins implements ILateMixinLoader {
         List<String> mixins = new ArrayList<>();
         if (loadedMods.contains("NotEnoughItems")) {
             mixins.add("NEIRecipeClickMixin");
+            mixins.add("NEIBookmarkMixin");
             mixins.add("NEIUsageClickMixin");
             mixins.add("NEITypingMixin");
             mixins.add("NEIRecipeTypingMixin");

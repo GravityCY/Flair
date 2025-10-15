@@ -2,8 +2,7 @@ package me.gravityio.flair.mixins.compat;
 
 import codechicken.nei.recipe.GuiCraftingRecipe;
 import codechicken.nei.recipe.GuiRecipe;
-import me.gravityio.flair.Flair;
-import me.gravityio.flair.event.NEIOpenRecipeEvent;
+import me.gravityio.flair.event.nei.NEIOpenRecipeEvent;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;

@@ -18,7 +18,6 @@ public class FlairConfig {
     public static final String SOUND_LOG_NAME = "sounds.log";
     public static final String SCREEN_LOG_NAME = "screens.log";
 
-
     public static FlairConfig INSTANCE;
     public static File CONFIG_DIRECTORY;
     public static File CONFIG_FILE;
@@ -26,6 +25,7 @@ public class FlairConfig {
     public boolean ALLOW_SPAM = false;
     public int VOLUME = 100;
     public ISoundGenerator<ItemStack> HOTBAR_SOUND;
+    public ISoundGenerator<ItemStack> BOOKMARK_SOUND;
     public ISoundGenerator<Object> TYPING_SOUND;
     public ISoundGenerator<Object> INVENTORY_SOUND;
 

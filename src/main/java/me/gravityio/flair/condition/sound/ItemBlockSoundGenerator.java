@@ -6,12 +6,12 @@ import net.minecraft.block.Block;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 
-public class ItemSoundGenerator implements ISoundGenerator<ItemStack> {
+public class ItemBlockSoundGenerator implements ISoundGenerator<ItemStack> {
     private final BlockSoundType soundToPlay;
     private final float volume;
     private final float pitch;
 
-    public ItemSoundGenerator(BlockSoundType soundToPlay, float volume, float pitch) {
+    public ItemBlockSoundGenerator(BlockSoundType soundToPlay, float volume, float pitch) {
         this.soundToPlay = soundToPlay;
         this.volume = volume;
         this.pitch = pitch;

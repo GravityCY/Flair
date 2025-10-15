@@ -1,4 +1,4 @@
-package me.gravityio.flair.event;
+package me.gravityio.flair.event.nei;
 
 import cpw.mods.fml.common.eventhandler.Event;
 

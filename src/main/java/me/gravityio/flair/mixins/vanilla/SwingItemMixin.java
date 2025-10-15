@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 public class SwingItemMixin {
-    @Debug(export = true)
+
     @Mixin(Minecraft.class)
     public static class SwingStartMixin {
         @Inject(
@@ -28,7 +28,6 @@ public class SwingItemMixin {
         }
     }
 
-    @Debug(export = true)
     @Mixin(EntityLivingBase.class)
     public static class SwingAnimMixin {
         @Inject(
