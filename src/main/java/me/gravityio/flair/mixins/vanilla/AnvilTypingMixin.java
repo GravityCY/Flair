@@ -16,9 +16,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class AnvilTypingMixin
 {
     @Shadow
-    GuiTextField field_147091_w;
+    private GuiTextField field_147091_w;
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
             method = "keyTyped",
             at = @At(

@@ -1,10 +1,13 @@
 package me.gravityio.flair.mixins.vanilla;
 
 import me.gravityio.flair.Flair;
+import me.gravityio.flair.event.DropStackEvent;
+import me.gravityio.flair.event.SlotClickEvent;
+import me.gravityio.flair.FlairMixinData;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
-import org.spongepowered.asm.mixin.Debug;
+import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,14 +22,6 @@ public class SlotClickMixin {
     @Shadow
     public List<net.minecraft.inventory.Slot> inventorySlots;
 
-    // MODE 0 == PICKUP, PLACE | MOUSEBUTTON IS REAL
-    // MODE 1 == SHIFT CLICK | MOUSEBUTTON IS REAL
-    // MODE 2 == NUMBERS | MOUSEBUTTON IS SLOT INDEX
-    // MODE 3 == MIDDLE MOUSE | MOUSEBUTTON IS MIDDLE MOUSE
-    // MODE 4 == DROP | MOUSEBUTTON: 0 IS DROP 1, 1 IS DROP ALL
-    // MODE 5 == SPREAD | MOUSEBUTTON IS PACKED INT: SPREAD STAGE, AND MOUSE BUTTON
-    // MODE 6 == PICKUP ALL | MOUSE BUTTON IS REAL BUT ONLY EVER LEFT CLICK
-
     @Inject(
 
             method = "slotClick",
@@ -34,31 +29,28 @@ public class SlotClickMixin {
     )
     private void flair$playHotbarSound(int slotId, int button, int mode, EntityPlayer player, CallbackInfoReturnable<ItemStack> ci) {
         if (!Flair.isClientThread()) return;
+        if (FlairMixinData.FROM_WINDOW_CLICK) {
+            FlairMixinData.FROM_WINDOW_CLICK = false;
+            return;
+        }
 
-        if (slotId < 0 || slotId >= this.inventorySlots.size()) return;
-        ItemStack stack = null;
-        switch (mode) {
-            case 0: {
-                stack = this.inventorySlots.get(slotId).getStack();
-                if (stack == null) stack = player.inventory.getItemStack();
-                break;
-            }
-            case 1, 3: {
-                stack = this.inventorySlots.get(slotId).getStack();
-                break;
-            }
-            case 2: {
-                stack = this.inventorySlots.get(slotId).getStack();
-                if (stack == null) stack = player.inventory.getStackInSlot(button);
-                break;
-            }
-            case 5, 6: {
-                stack = player.inventory.getItemStack();
-                break;
+        MinecraftForge.EVENT_BUS.post(new SlotClickEvent((Container) (Object) this, slotId, button, mode));
+
+        ItemStack cursorStack = player.inventory.getItemStack();
+        ItemStack eventStack = null;
+        if ((mode == 0 || mode == 1) && slotId == -999 && cursorStack != null) {
+            eventStack = cursorStack;
+        }
+
+        if (mode == 4 && slotId >= 0 && slotId < inventorySlots.size()) {
+            cursorStack = inventorySlots.get(slotId).getStack();
+            if (cursorStack != null) {
+                eventStack = cursorStack;
             }
         }
 
-        if (stack == null) return;
-        Flair.INSTANCE.playSound(Flair.ITEM_SOUNDS.getSound(stack));
+        if (eventStack != null) {
+            MinecraftForge.EVENT_BUS.post(new DropStackEvent(eventStack, player));
+        }
     }
 }

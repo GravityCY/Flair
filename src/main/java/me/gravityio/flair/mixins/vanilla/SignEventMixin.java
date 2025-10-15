@@ -19,7 +19,6 @@ public class SignEventMixin {
     @Shadow
     private int editLine;
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
             method = "keyTyped",
             at = @At(

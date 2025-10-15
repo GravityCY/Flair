@@ -17,7 +17,6 @@ public class ChatTypingMixin {
     @Shadow
     protected GuiTextField inputField;
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @Inject(
             method = "keyTyped",
             at = @At(

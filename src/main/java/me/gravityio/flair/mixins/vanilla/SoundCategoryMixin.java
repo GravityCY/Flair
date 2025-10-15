@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class SoundCategoryMixin
 {
 
-    @SuppressWarnings("UnresolvedMixinReference")
     @ModifyVariable(
             method = "playSound",
             at = @At(value = "STORE"),

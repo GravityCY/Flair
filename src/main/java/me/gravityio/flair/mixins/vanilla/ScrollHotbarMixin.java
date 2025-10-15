@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InventoryPlayer.class)
-public class ChangeSlotMixin {
+public class ScrollHotbarMixin {
     @Unique
     int flair$prevSlot;
 

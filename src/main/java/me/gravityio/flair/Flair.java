@@ -30,7 +30,6 @@ import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.client.event.sound.PlaySoundSourceEvent;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.entity.item.ItemTossEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import org.apache.logging.log4j.LogManager;
@@ -336,26 +335,58 @@ public class Flair {
         INSTANCE = this;
     }
 
+    // MODE 0 == PICKUP, PLACE | MOUSEBUTTON IS REAL
+    // MODE 1 == SHIFT CLICK | MOUSEBUTTON IS REAL
+    // MODE 2 == NUMBERS | MOUSEBUTTON IS SLOT INDEX
+    // MODE 3 == MIDDLE MOUSE | MOUSEBUTTON IS MIDDLE MOUSE
+    // MODE 4 == DROP | MOUSEBUTTON: 0 IS DROP 1, 1 IS DROP ALL
+    // MODE 5 == SPREAD | MOUSEBUTTON IS PACKED INT: SPREAD STAGE, AND MOUSE BUTTON
+    // MODE 6 == PICKUP ALL | MOUSE BUTTON IS REAL BUT ONLY EVER LEFT CLICK
+    @SubscribeEvent
+    public void onSlotClickEvent(SlotClickEvent event) {
+        var player = Minecraft.getMinecraft().thePlayer;
+        var inventorySlots = event.container.inventorySlots;
+
+        if (event.slot < 0 || event.slot >= inventorySlots.size()) return;
+        ItemStack stack = null;
+        switch (event.mode) {
+            case 0: {
+                stack = inventorySlots.get(event.slot).getStack();
+                if (stack == null) stack = player.inventory.getItemStack();
+                break;
+            }
+            case 1, 3: {
+                stack = inventorySlots.get(event.slot).getStack();
+                break;
+            }
+            case 2: {
+                stack = inventorySlots.get(event.slot).getStack();
+                if (stack == null) stack = player.inventory.getStackInSlot(event.button);
+                break;
+            }
+            case 5, 6: {
+                stack = player.inventory.getItemStack();
+                break;
+            }
+        }
+
+        if (stack == null) return;
+        playSound(ITEM_SOUNDS.getSound(stack));
+    }
+
+    @SubscribeEvent
+    public void onStackDroppedEvent(DropStackEvent event) {
+        if (!Flair.isClientThread()) return;
+
+        playSound(DROP_SOUNDS.getSound(event.item));
+    }
+
     @SubscribeEvent
     public void onSwingItemEvent(SwingItemEvent event) {
         if (!Flair.isClientThread()) return;
         if (event.type != SwingItemEvent.SwingType.START) return;
 
         this.playSoundForced(SWING_SOUNDS.getSound(event.stack));
-    }
-
-    @SubscribeEvent
-    public void onWorldUnload(WorldEvent.Unload event) {
-        if (!Flair.isClientThread()) return;
-        if (this.logSounds) this.logSounds();
-        if (this.logScreenClasses) this.logScreens();
-    }
-
-    @SubscribeEvent
-    public void onSoundEvent(PlaySoundSourceEvent event) {
-        if (!this.logSounds) return;
-        if (event.sound instanceof MetaSound) return;
-        FlairLog.SOUNDS.printf("Sound '%s' played%n", event.sound.getPositionedSoundLocation());
     }
 
     @SubscribeEvent
@@ -376,13 +407,6 @@ public class Flair {
         if (event.action != PlayerInteractEvent.Action.RIGHT_CLICK_BLOCK) return;
 
         playSound(BLOCK_SOUNDS.getSound(new BlockInstance(block, event.world, te, meta, event.x, event.y, event.z)));
-    }
-
-    @SubscribeEvent
-    public void onItemTossedEvent(ItemTossEvent event) {
-        if (!Flair.isClientThread()) return;
-
-        playSound(DROP_SOUNDS.getSound(event.entityItem.getEntityItem()));
     }
 
     @SubscribeEvent
@@ -475,4 +499,17 @@ public class Flair {
         this.playSoundForced(sound.copy(null, null, Math.lerp(sound.pitch, 2f, p)));
     }
 
+    @SubscribeEvent
+    public void onWorldUnload(WorldEvent.Unload event) {
+        if (!Flair.isClientThread()) return;
+        if (this.logSounds) this.logSounds();
+        if (this.logScreenClasses) this.logScreens();
+    }
+
+    @SubscribeEvent
+    public void onSoundEvent(PlaySoundSourceEvent event) {
+        if (!this.logSounds) return;
+        if (event.sound instanceof MetaSound) return;
+        FlairLog.SOUNDS.printf("Sound '%s' played%n", event.sound.getPositionedSoundLocation());
+    }
 }
