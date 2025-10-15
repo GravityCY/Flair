@@ -1,23 +1,22 @@
 package me.gravityio.flair.mixins.vanilla;
 
 import me.gravityio.flair.Flair;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.Container;
 import net.minecraft.item.ItemStack;
 import org.spongepowered.asm.mixin.Debug;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.List;
-
 @SuppressWarnings("UnusedMixin")
-@Mixin(Container.class)
-public class SlotClickMixin {
-    @Shadow
-    public List<net.minecraft.inventory.Slot> inventorySlots;
+@Debug(export = true)
+@Mixin(PlayerControllerMP.class)
+public class SlotClickBackupMixin {
 
     // MODE 0 == PICKUP, PLACE | MOUSEBUTTON IS REAL
     // MODE 1 == SHIFT CLICK | MOUSEBUTTON IS REAL
@@ -27,28 +26,33 @@ public class SlotClickMixin {
     // MODE 5 == SPREAD | MOUSEBUTTON IS PACKED INT: SPREAD STAGE, AND MOUSE BUTTON
     // MODE 6 == PICKUP ALL | MOUSE BUTTON IS REAL BUT ONLY EVER LEFT CLICK
 
+    @Shadow
+    @Final
+    private Minecraft mc;
+
     @Inject(
 
-            method = "slotClick",
+            method = "windowClick",
             at = @At("HEAD")
     )
-    private void flair$playHotbarSound(int slotId, int button, int mode, EntityPlayer player, CallbackInfoReturnable<ItemStack> ci) {
+    private void flair$playHotbarSound(int windowId, int slotId, int button, int mode, EntityPlayer player, CallbackInfoReturnable<ItemStack> cir) {
         if (!Flair.isClientThread()) return;
+        var inventorySlots = player.openContainer.inventorySlots;
 
-        if (slotId < 0 || slotId >= this.inventorySlots.size()) return;
+        if (slotId < 0 || slotId >= inventorySlots.size()) return;
         ItemStack stack = null;
         switch (mode) {
             case 0: {
-                stack = this.inventorySlots.get(slotId).getStack();
+                stack = inventorySlots.get(slotId).getStack();
                 if (stack == null) stack = player.inventory.getItemStack();
                 break;
             }
             case 1, 3: {
-                stack = this.inventorySlots.get(slotId).getStack();
+                stack = inventorySlots.get(slotId).getStack();
                 break;
             }
             case 2: {
-                stack = this.inventorySlots.get(slotId).getStack();
+                stack = inventorySlots.get(slotId).getStack();
                 if (stack == null) stack = player.inventory.getStackInSlot(button);
                 break;
             }

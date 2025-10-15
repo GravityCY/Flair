@@ -52,6 +52,7 @@ public class FlairEarlyMixins implements IFMLLoadingPlugin, IEarlyMixinLoader {
             return Arrays.asList(
                     "DropStackMixin",
                     "SlotClickMixin",
+                    "SlotClickBackupMixin",
                     "SoundCategoryMixin",
                     "ChangeSlotMixin",
                     "SignEventMixin",
