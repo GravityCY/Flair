@@ -24,6 +24,7 @@ import net.minecraft.client.gui.GuiIngame;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.inventory.GuiInventory;
 import net.minecraft.init.Blocks;
+import net.minecraft.inventory.SlotCrafting;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
@@ -350,6 +351,8 @@ public class Flair {
         var inventorySlots = event.container.inventorySlots;
 
         if (event.slot < 0 || event.slot >= inventorySlots.size()) return;
+        if (event.container.inventorySlots.get(event.slot) instanceof SlotCrafting) return;
+
         ItemStack stack = null;
         switch (event.mode) {
             case 0: {
